@@ -1,0 +1,129 @@
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { getMenuItemsByRole } from '../config/menu';
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const { mainItems, adminItems } = getMenuItemsByRole(user?.rol_id);
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  return (
+    <div className="h-screen flex overflow-hidden bg-green-50">
+      {/* Sidebar */}
+      <div className={`${sidebarOpen ? 'block' : 'hidden'} fixed inset-0 z-40 lg:hidden`}>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)}></div>
+      </div>
+
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-green-800 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className="flex items-center justify-center h-20 bg-white border-b border-green-200">
+          <img 
+            src="/logo-escasan.svg" 
+            alt="ESCASAN Logo" 
+            className="h-16 w-auto object-contain"
+            onError={(e) => {
+              // Fallback si la imagen no se carga
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.nextElementSibling.style.display = 'flex';
+            }}
+          />
+          <div className="flex items-center space-x-3" style={{display: 'none'}}>
+            {/* Logo placeholder - fallback si la imagen no se carga */}
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-green-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">E</span>
+            </div>
+            <h1 className="text-green-600 text-xl font-bold">ESCASAN</h1>
+          </div>
+        </div>
+        
+        <nav className="mt-5 px-2">
+          <div className="space-y-1">
+            {mainItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`${
+                  location.pathname === item.href
+                    ? 'bg-green-600 text-white'
+                    : 'text-green-100 hover:bg-green-700 hover:text-white'
+                } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200`}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          {adminItems.length > 0 && (
+            <div className="mt-8">
+              <h3 className="px-2 text-xs font-semibold text-green-300 uppercase tracking-wider">
+                Administración
+              </h3>
+              <div className="mt-2 space-y-1">
+                {adminItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`${
+                      location.pathname === item.href
+                        ? 'bg-orange-600 text-white'
+                        : 'text-green-100 hover:bg-orange-500 hover:text-white'
+                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200`}
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </nav>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 overflow-hidden">
+        {/* Top bar */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              className="lg:hidden text-white hover:text-orange-200"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-white">
+                Bienvenido, <strong>{user?.nombre}</strong>
+              </span>
+              <span className="text-xs text-orange-100 bg-orange-700 px-2 py-1 rounded">
+                {user?.rol?.nombre}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="text-sm text-white hover:text-orange-200 transition-colors duration-200"
+              >
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-6 bg-white">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;
