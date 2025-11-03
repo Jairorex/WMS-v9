@@ -7,52 +7,155 @@ export interface MenuItem {
 }
 
 export const menuConfig: MenuItem[] = [
-  // Sección principal
-  { name: 'Dashboard', href: '/', icon: '🏠' },
-  { name: 'Órdenes de Salida', href: '/ordenes-salida', icon: '📦' },
-  { name: 'Picking', href: '/picking', icon: '📋' },
-  { name: 'Packing', href: '/packing', icon: '📦' },
-  { name: 'Movimiento', href: '/movimiento', icon: '🔄' },
-  { name: 'TAREAS', href: '/tareas-conteo', icon: '🔢' },
-  { name: 'Productos', href: '/productos', icon: '📦' },
-  { name: 'Ubicaciones', href: '/ubicaciones', icon: '📍' },
-  { name: 'Lotes', href: '/lotes', icon: '📋' },
-  { name: 'Incidencias', href: '/incidencias', icon: '⚠️' },
-  { name: 'Existencias', href: '/existencias', icon: '📊' },
-  { name: 'Historial', href: '/historial', icon: '📜' },
-  
-  // Sección de administración (solo Admin)
+  // ========================================
+  // OPERACIONES
+  // ========================================
+  { 
+    name: 'Dashboard', 
+    href: '/', 
+    icon: '🏠',
+    section: 'operaciones'
+  },
+  { 
+    name: 'Tareas', 
+    href: '/tareas-conteo', 
+    icon: '📋',
+    section: 'operaciones'
+  },
+  { 
+    name: 'Picking', 
+    href: '/tareas-conteo?tipo=picking', 
+    icon: '📦',
+    section: 'operaciones'
+  },
+  { 
+    name: 'Packing', 
+    href: '/tareas-conteo?tipo=packing', 
+    icon: '📦',
+    section: 'operaciones'
+  },
+  { 
+    name: 'Movimiento / Reubicaciones', 
+    href: '/movimiento', 
+    icon: '🔄',
+    section: 'operaciones'
+  },
+  { 
+    name: 'Incidencias', 
+    href: '/incidencias', 
+    icon: '⚠️',
+    section: 'operaciones'
+  },
+
+  // ========================================
+  // PLANIFICACIÓN
+  // ========================================
+  { 
+    name: 'Órdenes de Salida', 
+    href: '/ordenes-salida', 
+    icon: '📤',
+    section: 'planificacion'
+  },
+
+  // ========================================
+  // CONTROL Y ANÁLISIS
+  // ========================================
+  { 
+    name: 'Historial de Tareas', 
+    href: '/historial', 
+    icon: '📜',
+    section: 'control'
+  },
+  { 
+    name: 'Reportes', 
+    href: '/reportes', 
+    icon: '📈',
+    section: 'control',
+    roles: [1, '1', 2, '2']
+  },
+
+  // ========================================
+  // CATÁLOGOS
+  // ========================================
+  { 
+    name: 'Productos', 
+    href: '/productos', 
+    icon: '📦',
+    section: 'catalogos'
+  },
+  { 
+    name: 'Lotes', 
+    href: '/lotes', 
+    icon: '📋',
+    section: 'catalogos'
+  },
+  { 
+    name: 'Ubicaciones', 
+    href: '/ubicaciones', 
+    icon: '📍',
+    section: 'catalogos'
+  },
   { 
     name: 'Usuarios', 
     href: '/usuarios', 
-    icon: '👥', 
-    roles: [1, '1'], 
-    section: 'admin' 
+    icon: '👥',
+    section: 'catalogos',
+    roles: [1, '1']
   },
   { 
     name: 'Etiquetas', 
     href: '/etiquetas', 
-    icon: '🏷️', 
-    roles: [1, '1'], 
-    section: 'admin' 
-  },
-  
-  // Sección de reportes (Admin y Supervisor)
-  { 
-    name: 'Reportes', 
-    href: '/reportes', 
-    icon: '📊', 
-    roles: [1, '1', 2, '2'], 
-    section: 'admin' 
+    icon: '🏷️',
+    section: 'catalogos',
+    roles: [1, '1']
   },
 ];
 
+export const menuSections = [
+  {
+    id: 'operaciones',
+    name: 'OPERACIONES',
+    order: 1
+  },
+  {
+    id: 'planificacion',
+    name: 'PLANIFICACIÓN',
+    order: 2
+  },
+  {
+    id: 'control',
+    name: 'CONTROL Y ANÁLISIS',
+    order: 3
+  },
+  {
+    id: 'catalogos',
+    name: 'CATÁLOGOS',
+    order: 4
+  }
+];
+
 export const getMenuItemsByRole = (userRole: string | number | undefined) => {
-  const mainItems = menuConfig.filter(item => !item.section);
-  const adminItems = menuConfig.filter(item => 
-    item.section === 'admin' && 
-    (!item.roles || item.roles.includes(userRole))
+  // Filtrar items por rol
+  const filteredItems = menuConfig.filter(item => 
+    !item.roles || item.roles.includes(userRole)
   );
+
+  // Agrupar por sección
+  const groupedBySection: { [key: string]: MenuItem[] } = {};
   
-  return { mainItems, adminItems };
+  filteredItems.forEach(item => {
+    const section = item.section || 'otros';
+    if (!groupedBySection[section]) {
+      groupedBySection[section] = [];
+    }
+    groupedBySection[section].push(item);
+  });
+
+  // Ordenar secciones según el orden definido
+  const sections = menuSections.map(section => ({
+    ...section,
+    items: groupedBySection[section.id] || []
+  }));
+
+  return { sections };
 };

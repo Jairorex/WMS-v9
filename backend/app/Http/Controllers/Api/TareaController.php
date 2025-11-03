@@ -22,7 +22,17 @@ class TareaController extends Controller
         }
 
         if ($request->filled('tipo')) {
-            $query->where('tipo_tarea_id', $request->tipo);
+            // Validar que tipo sea un número (ID de tipo_tarea)
+            // Si viene un string como 'picking' o 'packing', ignorarlo
+            $tipo = $request->tipo;
+            if (is_numeric($tipo)) {
+                $query->where('tipo_tarea_id', (int)$tipo);
+            } else {
+                // Si viene un código, buscar por código del tipo
+                $query->whereHas('tipo', function($q) use ($tipo) {
+                    $q->where('codigo', $tipo);
+                });
+            }
         }
 
         if ($request->filled('estado')) {

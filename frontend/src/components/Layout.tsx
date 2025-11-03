@@ -8,7 +8,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const { mainItems, adminItems } = getMenuItemsByRole(user?.rol_id);
+  const { sections } = getMenuItemsByRole(user?.rol_id);
 
   const handleLogout = async () => {
     await logout();
@@ -42,47 +42,50 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </div>
         
-        <nav className="mt-5 px-2">
-          <div className="space-y-1">
-            {mainItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`${
-                  location.pathname === item.href
-                    ? 'bg-green-600 text-white'
-                    : 'text-green-100 hover:bg-green-700 hover:text-white'
-                } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200`}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.name}
-              </Link>
-            ))}
-          </div>
-
-          {adminItems.length > 0 && (
-            <div className="mt-8">
-              <h3 className="px-2 text-xs font-semibold text-green-300 uppercase tracking-wider">
-                Administración
-              </h3>
-              <div className="mt-2 space-y-1">
-                {adminItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`${
-                      location.pathname === item.href
-                        ? 'bg-orange-600 text-white'
-                        : 'text-green-100 hover:bg-orange-500 hover:text-white'
-                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200`}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    {item.name}
-                  </Link>
-                ))}
+        <nav className="mt-5 px-2 space-y-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
+          {sections.map((section) => {
+            if (section.items.length === 0) return null;
+            
+            return (
+              <div key={section.id} className="space-y-1">
+                <h3 className="px-2 text-xs font-semibold text-green-300 uppercase tracking-wider mb-2">
+                  {section.name}
+                </h3>
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    // Verificar si la ruta actual coincide
+                    const itemPath = item.href.split('?')[0];
+                    const itemSearch = item.href.includes('?') ? item.href.split('?')[1] : '';
+                    const currentSearch = location.search.replace('?', '');
+                    
+                    let isActive = false;
+                    if (item.href.includes('?')) {
+                      // Si el item tiene query params, verificar ambos
+                      isActive = location.pathname === itemPath && currentSearch === itemSearch;
+                    } else {
+                      // Si no tiene query params, solo verificar el path
+                      isActive = location.pathname === itemPath;
+                    }
+                    
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={`${
+                          isActive
+                            ? 'bg-green-600 text-white'
+                            : 'text-green-100 hover:bg-green-700 hover:text-white'
+                        } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200`}
+                      >
+                        <span className="mr-3 text-base">{item.icon}</span>
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })}
         </nav>
       </div>
 
@@ -91,6 +94,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {/* Top bar */}
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 shadow-sm">
           <div className="flex items-center justify-between px-4 py-3">
+            {/* Botón de menú móvil (solo visible en pantallas pequeñas) */}
             <button
               className="lg:hidden text-white hover:text-orange-200"
               onClick={() => setSidebarOpen(true)}
@@ -100,16 +104,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </svg>
             </button>
 
+            {/* Espaciador para empujar el contenido a la derecha */}
+            <div className="flex-1"></div>
+
+            {/* Información del usuario y botón cerrar sesión (alineados a la derecha) */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-white">
+              <span className="text-sm text-white hidden sm:inline">
                 Bienvenido, <strong>{user?.nombre}</strong>
               </span>
-              <span className="text-xs text-orange-100 bg-orange-700 px-2 py-1 rounded">
+              <span className="text-xs text-orange-100 bg-orange-700 px-2 py-1 rounded hidden sm:inline-block">
                 {user?.rol?.nombre}
               </span>
               <button
                 onClick={handleLogout}
-                className="text-sm text-white hover:text-orange-200 transition-colors duration-200"
+                className="text-sm text-white hover:text-orange-200 transition-colors duration-200 px-3 py-1 rounded hover:bg-orange-700"
               >
                 Cerrar Sesión
               </button>

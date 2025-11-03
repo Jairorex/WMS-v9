@@ -40,7 +40,8 @@ function App() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/usuarios" element={<Usuarios />} />
                     <Route path="/reportes" element={<Reportes />} />
-                    <Route path="/picking" element={<Picking />} />
+                    {/* Redirigir /picking a /tareas con filtro */}
+                    <Route path="/picking" element={<Navigate to="/tareas-conteo?tipo=picking" replace />} />
                     <Route path="/picking/:id" element={<PickingDetalle />} />
                     <Route path="/existencias" element={<Inventario />} />
                     <Route path="/tareas-conteo" element={<Tareas />} />
@@ -55,7 +56,8 @@ function App() {
                            <Route path="/ordenes-salida" element={<OrdenesSalida />} />
                            <Route path="/ordenes-salida/:id" element={<OrdenSalidaDetalle />} />
                            {/* Rutas de módulos */}
-                    <Route path="/packing" element={<Packing />} />
+                    {/* Redirigir /packing a /tareas con filtro */}
+                    <Route path="/packing" element={<Navigate to="/tareas-conteo?tipo=packing" replace />} />
                     <Route path="/movimiento" element={<Movimiento />} />
                     <Route path="/historial" element={<HistorialMovimientos />} />
                     <Route path="/etiquetas" element={<div className="p-6"><h1 className="text-2xl font-bold">Etiquetas</h1><p className="text-gray-600">Funcionalidad en desarrollo</p></div>} />
