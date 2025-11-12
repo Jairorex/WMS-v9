@@ -152,11 +152,32 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('ubicaciones/{ubicacion}/desactivar', [UbicacionController::class, 'desactivar']);
     Route::get('ubicaciones-catalogos', [UbicacionController::class, 'catalogos']);
 
-    // Tareas
+    // Tareas - Endpoint principal unificado
     Route::apiResource('tareas', TareaController::class);
     Route::patch('tareas/{tarea}/asignar', [TareaController::class, 'asignar']);
     Route::patch('tareas/{tarea}/cambiar-estado', [TareaController::class, 'cambiarEstado']);
+    Route::patch('tareas/{tarea}/completar', [TareaController::class, 'completar']);
     Route::get('tareas-catalogos', [TareaController::class, 'catalogos']);
+
+    // Rutas deprecadas - Delegar a TareaController con filtro aplicado
+    // Estas rutas están deprecadas pero siguen funcionando para compatibilidad
+    Route::prefix('picking')->group(function () {
+        Route::get('/', function (Request $request) {
+            // Simular request con filtro tipo=picking
+            $newRequest = $request->duplicate();
+            $newRequest->merge(['tipo' => 'picking']);
+            return app(TareaController::class)->index($newRequest);
+        });
+    });
+
+    Route::prefix('packing')->group(function () {
+        Route::get('/', function (Request $request) {
+            // Simular request con filtro tipo=packing
+            $newRequest = $request->duplicate();
+            $newRequest->merge(['tipo' => 'packing']);
+            return app(TareaController::class)->index($newRequest);
+        });
+    });
 
     // Incidencias
     Route::apiResource('incidencias', IncidenciaController::class);

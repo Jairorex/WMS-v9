@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Traits\ApiResponse;
 use App\Models\Tarea;
+use App\Models\TareaLog;
 use App\Models\TipoTarea;
 use App\Models\EstadoTarea;
 use App\Models\Usuario;
@@ -11,55 +13,87 @@ use Illuminate\Http\Request;
 
 class TareaController extends Controller
 {
+    use ApiResponse;
     public function index(Request $request)
     {
         $query = Tarea::with(['tipo', 'estado', 'creador', 'detalles.producto', 'usuarios']);
 
-        // Filtros
+        // Búsqueda general
         if ($request->filled('q')) {
             $search = $request->q;
-            $query->where('descripcion', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('descripcion', 'like', "%{$search}%")
+                  ->orWhere('id_tarea', 'like', "%{$search}%");
+            });
         }
 
+        // Filtro por tipo (acepta ID numérico o código string como 'picking', 'packing')
         if ($request->filled('tipo')) {
-            // Validar que tipo sea un número (ID de tipo_tarea)
-            // Si viene un string como 'picking' o 'packing', ignorarlo
-            $tipo = $request->tipo;
-            if (is_numeric($tipo)) {
-                $query->where('tipo_tarea_id', (int)$tipo);
+            $query->porTipo($request->tipo);
+        }
+
+        // Filtro por estado (acepta ID numérico o código string)
+        if ($request->filled('estado')) {
+            if (is_numeric($request->estado)) {
+                $query->where('estado_tarea_id', (int)$request->estado);
             } else {
-                // Si viene un código, buscar por código del tipo
-                $query->whereHas('tipo', function($q) use ($tipo) {
-                    $q->where('codigo', $tipo);
-                });
+                $query->porEstado($request->estado);
             }
         }
 
-        if ($request->filled('estado')) {
-            $query->where('estado_tarea_id', $request->estado);
-        }
-
+        // Filtro por prioridad
         if ($request->filled('prioridad')) {
-            $query->where('prioridad', $request->prioridad);
+            $query->porPrioridad($request->prioridad);
         }
 
+        // Filtro por usuario asignado
+        if ($request->filled('usuario_asignado')) {
+            $query->porUsuarioAsignado($request->usuario_asignado);
+        }
+
+        // Filtro por zona (a través de ubicaciones)
+        if ($request->filled('zona')) {
+            $query->porZona($request->zona);
+        }
+
+        // Filtros de fecha
+        if ($request->filled('fecha_inicio')) {
+            $query->porFechaInicio($request->fecha_inicio);
+        }
+
+        if ($request->filled('fecha_fin')) {
+            $query->porFechaFin($request->fecha_fin);
+        }
+
+        // También soportar 'desde' y 'hasta' para compatibilidad
         if ($request->filled('desde')) {
-            $query->whereDate('fecha_creacion', '>=', $request->desde);
+            $query->porFechaInicio($request->desde);
         }
 
         if ($request->filled('hasta')) {
-            $query->whereDate('fecha_creacion', '<=', $request->hasta);
+            $query->porFechaFin($request->hasta);
         }
 
+        // Filtro de tareas vencidas
         if ($request->boolean('vencidas')) {
             $query->vencidas();
         }
 
-        $tareas = $query->orderBy('fecha_creacion', 'desc')->get();
+        // Ordenamiento
+        $orderBy = $request->get('order_by', 'fecha_creacion');
+        $orderDir = $request->get('order_dir', 'desc');
+        $query->orderBy($orderBy, $orderDir);
 
-        return response()->json([
-            'data' => $tareas
-        ]);
+        // Paginación
+        $perPage = $request->get('per_page', 15);
+        
+        if ($request->get('paginate', true)) {
+            $tareas = $query->paginate($perPage);
+            return $this->paginatedResponse($tareas, 'Tareas obtenidas exitosamente');
+        } else {
+            $tareas = $query->get();
+            return $this->successResponse($tareas, 'Tareas obtenidas exitosamente');
+        }
     }
 
     public function store(Request $request)
@@ -90,17 +124,19 @@ class TareaController extends Controller
             ]);
         }
 
-        return response()->json([
-            'data' => $tarea->load(['tipo', 'estado', 'creador']),
-            'message' => 'Tarea creada exitosamente'
-        ], 201);
+        return $this->successResponse(
+            $tarea->load(['tipo', 'estado', 'creador']),
+            'Tarea creada exitosamente',
+            201
+        );
     }
 
     public function show(Tarea $tarea)
     {
-        return response()->json([
-            'data' => $tarea->load(['tipo', 'estado', 'creador', 'detalles.producto', 'usuarios'])
-        ]);
+        return $this->successResponse(
+            $tarea->load(['tipo', 'estado', 'creador', 'detalles.producto', 'usuarios']),
+            'Tarea obtenida exitosamente'
+        );
     }
 
     public function update(Request $request, Tarea $tarea)
@@ -133,19 +169,17 @@ class TareaController extends Controller
             }
         }
 
-        return response()->json([
-            'data' => $tarea->load(['tipo', 'estado', 'creador', 'usuarios']),
-            'message' => 'Tarea actualizada exitosamente'
-        ]);
+        return $this->successResponse(
+            $tarea->load(['tipo', 'estado', 'creador', 'usuarios']),
+            'Tarea actualizada exitosamente'
+        );
     }
 
     public function destroy(Tarea $tarea)
     {
         $tarea->delete();
 
-        return response()->json([
-            'message' => 'Tarea eliminada exitosamente'
-        ]);
+        return $this->successResponse(null, 'Tarea eliminada exitosamente');
     }
 
     public function asignar(Request $request, Tarea $tarea)
@@ -162,29 +196,58 @@ class TareaController extends Controller
             ]
         ]);
 
-        return response()->json([
-            'data' => $tarea->load('usuarios'),
-            'message' => 'Usuario asignado exitosamente'
-        ]);
+        return $this->successResponse(
+            $tarea->load('usuarios'),
+            'Usuario asignado exitosamente'
+        );
     }
 
     public function cambiarEstado(Request $request, Tarea $tarea)
     {
         $request->validate([
             'estado' => 'required|string|exists:estados_tarea,codigo',
+            'comentarios' => 'nullable|string',
         ]);
 
+        $estadoAnterior = $tarea->estado ? $tarea->estado->codigo : null;
         $estado = EstadoTarea::where('codigo', $request->estado)->first();
+        
         $tarea->update(['estado_tarea_id' => $estado->id_estado_tarea]);
 
         if ($request->estado === 'COMPLETADA') {
             $tarea->update(['fecha_cierre' => now()]);
         }
 
-        return response()->json([
-            'data' => $tarea->load(['tipo', 'estado', 'creador']),
-            'message' => 'Estado de tarea actualizado exitosamente'
-        ]);
+        // Registrar en log
+        try {
+            TareaLog::create([
+                'id_tarea' => $tarea->id_tarea,
+                'usuario_id' => auth()->id(),
+                'estado_anterior' => $estadoAnterior,
+                'estado_nuevo' => $request->estado,
+                'accion' => 'cambiar_estado',
+                'dispositivo' => $request->header('User-Agent'),
+                'ip_address' => $request->ip(),
+                'comentarios' => $request->comentarios,
+            ]);
+        } catch (\Exception $e) {
+            // Si la tabla no existe aún, solo loguear el error pero no fallar
+            \Log::warning('No se pudo registrar log de tarea: ' . $e->getMessage());
+        }
+
+        return $this->successResponse(
+            $tarea->load(['tipo', 'estado', 'creador']),
+            'Estado de tarea actualizado exitosamente'
+        );
+    }
+
+    /**
+     * Completar tarea (alias de cambiarEstado con estado COMPLETADA)
+     */
+    public function completar(Request $request, Tarea $tarea)
+    {
+        $request->merge(['estado' => 'COMPLETADA']);
+        return $this->cambiarEstado($request, $tarea);
     }
 
     public function catalogos()
@@ -198,11 +261,11 @@ class TareaController extends Controller
         ];
         $usuarios = Usuario::where('activo', true)->get(['id_usuario', 'nombre', 'usuario']);
 
-        return response()->json([
+        return $this->successResponse([
             'tipos' => $tipos,
             'estados' => $estados,
             'prioridades' => $prioridades,
             'usuarios' => $usuarios
-        ]);
+        ], 'Catálogos obtenidos exitosamente');
     }
 }

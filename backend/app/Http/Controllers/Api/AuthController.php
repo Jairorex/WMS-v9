@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Traits\ApiResponse;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     public function login(Request $request)
     {
         $request->validate([
@@ -23,15 +26,19 @@ class AuthController extends Controller
                          ->first();
 
         if (!$usuario || !Hash::check($request->password, $usuario->contrasena)) {
-            throw ValidationException::withMessages([
-                'usuario' => ['Las credenciales proporcionadas son incorrectas.'],
-            ]);
+            return $this->errorResponse(
+                'Las credenciales proporcionadas son incorrectas.',
+                ['usuario' => ['Las credenciales proporcionadas son incorrectas.']],
+                401
+            );
         }
 
         if (!$usuario->activo) {
-            throw ValidationException::withMessages([
-                'usuario' => ['El usuario está desactivado.'],
-            ]);
+            return $this->errorResponse(
+                'El usuario está desactivado.',
+                ['usuario' => ['El usuario está desactivado.']],
+                403
+            );
         }
 
         // Actualizar último login
@@ -40,28 +47,25 @@ class AuthController extends Controller
         // Crear token
         $token = $usuario->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
+        return $this->successResponse([
             'usuario' => $usuario->load('rol'),
             'token' => $token,
-            'message' => 'Login exitoso'
-        ]);
+        ], 'Login exitoso');
     }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Logout exitoso'
-        ]);
+        return $this->successResponse(null, 'Logout exitoso');
     }
 
     public function me(Request $request)
     {
         $usuario = $request->user()->load('rol');
         
-        return response()->json([
+        return $this->successResponse([
             'usuario' => $usuario
-        ]);
+        ], 'Usuario obtenido exitosamente');
     }
 }

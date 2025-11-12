@@ -1,0 +1,26 @@
+# Dockerfile para Frontend React/Vite en Desarrollo
+FROM node:20-alpine
+
+# Metadatos
+LABEL maintainer="WMS Escasan"
+LABEL description="Frontend React con Vite - Desarrollo"
+
+# Configurar directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar todas las dependencias (incluyendo dev)
+RUN npm install
+
+# Variables de entorno
+ARG VITE_API_URL=http://localhost:8000
+ENV VITE_API_URL=$VITE_API_URL
+
+# Exponer puerto de Vite
+EXPOSE 5173
+
+# Comando para desarrollo (hot reload)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+

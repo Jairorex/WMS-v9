@@ -91,7 +91,12 @@ const Tareas: React.FC = () => {
   const tipoFiltro = searchParams.get('tipo') || '';
   
   const [tareas, setTareas] = useState<TareaUnificada[]>([]);
-  const [catalogos, setCatalogos] = useState<Catalogos | null>(null);
+  const [catalogos, setCatalogos] = useState<Catalogos>({
+    tipos: [],
+    estados: [],
+    prioridades: [],
+    usuarios: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filtros, setFiltros] = useState({
@@ -246,9 +251,23 @@ const Tareas: React.FC = () => {
   const fetchCatalogos = async () => {
     try {
       const response = await http.get('/api/tareas-catalogos');
-      setCatalogos(response.data);
+      // El API devuelve { success: true, data: { tipos, estados, prioridades, usuarios } }
+      const catalogosData = response.data.data || response.data || {};
+      setCatalogos({
+        tipos: Array.isArray(catalogosData.tipos) ? catalogosData.tipos : [],
+        estados: Array.isArray(catalogosData.estados) ? catalogosData.estados : [],
+        prioridades: Array.isArray(catalogosData.prioridades) ? catalogosData.prioridades : [],
+        usuarios: Array.isArray(catalogosData.usuarios) ? catalogosData.usuarios : []
+      });
     } catch (err: any) {
       console.error('Error al cargar catálogos:', err);
+      // Mantener valores por defecto en caso de error
+      setCatalogos({
+        tipos: [],
+        estados: [],
+        prioridades: [],
+        usuarios: []
+      });
     }
   };
 
@@ -476,7 +495,7 @@ const Tareas: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
-              {catalogos?.tipos.map((tipo) => (
+              {catalogos?.tipos && Array.isArray(catalogos.tipos) && catalogos.tipos.map((tipo) => (
                 <option key={tipo.id_tipo_tarea} value={tipo.id_tipo_tarea}>
                   {tipo.nombre}
                 </option>
@@ -494,7 +513,7 @@ const Tareas: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
-              {catalogos?.estados.map((estado) => (
+              {catalogos?.estados && Array.isArray(catalogos.estados) && catalogos.estados.map((estado) => (
                 <option key={estado.id_estado_tarea} value={estado.id_estado_tarea}>
                   {estado.nombre}
                 </option>
@@ -754,7 +773,7 @@ const Tareas: React.FC = () => {
                     required
                   >
                     <option value="">Seleccionar tipo</option>
-                    {catalogos?.tipos.map((tipo) => (
+                    {catalogos?.tipos && Array.isArray(catalogos.tipos) && catalogos.tipos.map((tipo) => (
                       <option key={tipo.id_tipo_tarea} value={tipo.id_tipo_tarea}>
                         {tipo.nombre}
                       </option>
@@ -772,7 +791,7 @@ const Tareas: React.FC = () => {
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     required
                   >
-                    {catalogos?.prioridades.map((prioridad) => (
+                    {catalogos?.prioridades && Array.isArray(catalogos.prioridades) && catalogos.prioridades.map((prioridad) => (
                       <option key={prioridad.codigo} value={prioridad.codigo}>
                         {prioridad.nombre}
                       </option>
@@ -791,7 +810,7 @@ const Tareas: React.FC = () => {
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Sin asignar</option>
-                    {catalogos?.usuarios.map((usuario) => (
+                    {catalogos?.usuarios && Array.isArray(catalogos.usuarios) && catalogos.usuarios.map((usuario) => (
                       <option key={usuario.id_usuario} value={usuario.id_usuario}>
                         {usuario.nombre} ({usuario.usuario})
                       </option>
@@ -854,7 +873,7 @@ const Tareas: React.FC = () => {
                     required
                   >
                     <option value="">Seleccionar tipo</option>
-                    {catalogos?.tipos.map((tipo) => (
+                    {catalogos?.tipos && Array.isArray(catalogos.tipos) && catalogos.tipos.map((tipo) => (
                       <option key={tipo.id_tipo_tarea} value={tipo.id_tipo_tarea}>
                         {tipo.nombre}
                       </option>
@@ -873,7 +892,7 @@ const Tareas: React.FC = () => {
                     required
                   >
                     <option value="">Seleccionar prioridad</option>
-                    {catalogos?.prioridades.map((prioridad) => (
+                    {catalogos?.prioridades && Array.isArray(catalogos.prioridades) && catalogos.prioridades.map((prioridad) => (
                       <option key={prioridad.codigo} value={prioridad.codigo}>
                         {prioridad.nombre}
                       </option>
@@ -929,7 +948,7 @@ const Tareas: React.FC = () => {
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Sin asignar</option>
-                    {catalogos?.usuarios.map((usuario) => (
+                    {catalogos?.usuarios && Array.isArray(catalogos.usuarios) && catalogos.usuarios.map((usuario) => (
                       <option key={usuario.id_usuario} value={usuario.id_usuario}>
                         {usuario.nombre} ({usuario.usuario})
                       </option>

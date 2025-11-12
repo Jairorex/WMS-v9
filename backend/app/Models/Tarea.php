@@ -85,4 +85,46 @@ class Tarea extends Model
                         $q->whereNotIn('codigo', ['COMPLETADA', 'CANCELADA']);
                     });
     }
+
+    public function scopePorTipo($query, $tipo)
+    {
+        if (is_numeric($tipo)) {
+            return $query->where('tipo_tarea_id', (int)$tipo);
+        } else {
+            return $query->whereHas('tipo', function($q) use ($tipo) {
+                $q->where('codigo', $tipo);
+            });
+        }
+    }
+
+    public function scopePorUsuarioAsignado($query, $usuarioId)
+    {
+        return $query->whereHas('usuarios', function($q) use ($usuarioId) {
+            $q->where('usuarios.id_usuario', $usuarioId);
+        });
+    }
+
+    public function scopePorFechaInicio($query, $fechaInicio)
+    {
+        return $query->whereDate('fecha_creacion', '>=', $fechaInicio);
+    }
+
+    public function scopePorFechaFin($query, $fechaFin)
+    {
+        return $query->whereDate('fecha_creacion', '<=', $fechaFin);
+    }
+
+    public function scopePorZona($query, $zona)
+    {
+        // Buscar por zona a través de los detalles de tarea y sus ubicaciones
+        return $query->whereHas('detalles', function($q) use ($zona) {
+            $q->whereHas('ubicacionOrigen', function($uq) use ($zona) {
+                $uq->where('pasillo', 'like', "%{$zona}%")
+                   ->orWhere('codigo', 'like', "%{$zona}%");
+            })->orWhereHas('ubicacionDestino', function($uq) use ($zona) {
+                $uq->where('pasillo', 'like', "%{$zona}%")
+                   ->orWhere('codigo', 'like', "%{$zona}%");
+            });
+        });
+    }
 }
