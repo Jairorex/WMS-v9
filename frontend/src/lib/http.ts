@@ -43,5 +43,11 @@ http.interceptors.response.use(
 );
 
 export async function csrf() {
-  await http.get('/sanctum/csrf-cookie');
+  try {
+    await http.get('/sanctum/csrf-cookie');
+  } catch (error: any) {
+    // Si falla el CSRF cookie, no es crítico cuando usamos tokens Bearer
+    // Solo loguear el error pero no fallar
+    console.warn('No se pudo obtener CSRF cookie, continuando con autenticación por token:', error.message);
+  }
 }
