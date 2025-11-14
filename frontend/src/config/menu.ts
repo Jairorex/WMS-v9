@@ -137,7 +137,7 @@ export const menuSections = [
 export const getMenuItemsByRole = (userRole: string | number | undefined) => {
   // Filtrar items por rol
   const filteredItems = menuConfig.filter(item => 
-    !item.roles || item.roles.includes(userRole)
+    !item.roles || (userRole !== undefined && item.roles.includes(userRole))
   );
 
   // Agrupar por sección

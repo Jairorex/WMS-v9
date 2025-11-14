@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { http } from '../lib/http';
-import { useAuth } from '../contexts/AuthContext';
 
 interface MovimientoInventario {
   id: number;
@@ -67,8 +65,6 @@ const HistorialMovimientos: React.FC = () => {
     usuario_id: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchMovimientos();

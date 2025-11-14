@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -17,12 +16,10 @@ import Lotes from './pages/Lotes';
 import Incidencias from './pages/Incidencias';
 import IncidenciaDetalle from './pages/IncidenciaDetalle';
 import Reportes from './pages/Reportes';
-import Picking from './pages/Picking';
 import OrdenesSalida from './pages/OrdenesSalida';
 import OrdenSalidaDetalle from './pages/OrdenSalidaDetalle';
 import HistorialMovimientos from './pages/HistorialMovimientos';
 import Movimiento from './pages/Movimiento';
-import Packing from './pages/Packing';
 import PickingDetalle from './pages/PickingDetalle';
 
 function App() {

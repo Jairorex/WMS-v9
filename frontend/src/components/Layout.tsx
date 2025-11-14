@@ -29,8 +29,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             className="h-16 w-auto object-contain"
             onError={(e) => {
               // Fallback si la imagen no se carga
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling.style.display = 'flex';
+              const target = e.currentTarget as HTMLImageElement;
+              target.style.display = 'none';
+              const nextSibling = target.nextElementSibling as HTMLElement | null;
+              if (nextSibling) {
+                nextSibling.style.display = 'flex';
+              }
             }}
           />
           <div className="flex items-center space-x-3" style={{display: 'none'}}>
