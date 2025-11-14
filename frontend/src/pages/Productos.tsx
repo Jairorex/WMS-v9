@@ -216,7 +216,7 @@ const Productos: React.FC = () => {
 
   const puedeGestionarProductos = () => {
     if (!user) return false;
-    const esAdmin = user.rol_id === 1 || user.rol_id === '1';
+    const esAdmin = user.rol_id === 1;
     return esAdmin;
   };
 

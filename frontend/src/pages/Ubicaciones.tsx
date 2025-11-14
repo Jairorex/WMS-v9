@@ -127,9 +127,14 @@ const Ubicaciones: React.FC = () => {
     
     let ocupacion = 0;
     if (Array.isArray(ubicacion.inventario)) {
-      ocupacion = ubicacion.inventario.reduce((sum: number, item: any) => sum + (item.cantidad || 0), 0);
-    } else if (typeof ubicacion.inventario === 'object') {
-      ocupacion = ubicacion.inventario.cantidad || 0;
+      ocupacion = ubicacion.inventario.reduce((sum: number, item: any) => {
+        if (item && typeof item === 'object' && 'cantidad' in item) {
+          return sum + (Number(item.cantidad) || 0);
+        }
+        return sum;
+      }, 0);
+    } else if (typeof ubicacion.inventario === 'object' && ubicacion.inventario !== null && 'cantidad' in ubicacion.inventario) {
+      ocupacion = Number((ubicacion.inventario as any).cantidad) || 0;
     }
     
     const porcentaje = ubicacion.capacidad > 0 ? (ocupacion / ubicacion.capacidad) * 100 : 0;
@@ -273,7 +278,7 @@ const Ubicaciones: React.FC = () => {
 
   const puedeGestionarUbicaciones = () => {
     if (!user) return false;
-    const esAdmin = user.rol_id === 1 || user.rol_id === '1';
+    const esAdmin = user.rol_id === 1;
     return esAdmin;
   };
 

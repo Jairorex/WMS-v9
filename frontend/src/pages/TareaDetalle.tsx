@@ -69,6 +69,7 @@ interface Catalogos {
   tipos: Array<{ id_tipo_tarea: number; codigo: string; nombre: string }>;
   estados: Array<{ id_estado_tarea: number; codigo: string; nombre: string }>;
   prioridades: Array<{ codigo: string; nombre: string }>;
+  usuarios: Array<{ id_usuario: number; nombre: string }>;
 }
 
 const TareaDetalle: React.FC = () => {
@@ -113,10 +114,32 @@ const TareaDetalle: React.FC = () => {
 
   const fetchCatalogos = async () => {
     try {
-      const response = await http.get('/api/tareas-catalogos');
-      setCatalogos(response.data);
+      const [catalogosRes, usuariosRes] = await Promise.all([
+        http.get('/api/tareas-catalogos'),
+        http.get('/api/usuarios?activo=true&per_page=1000')
+      ]);
+      
+      const usuarios = Array.isArray(usuariosRes.data.data) 
+        ? usuariosRes.data.data 
+        : Array.isArray(usuariosRes.data) 
+          ? usuariosRes.data 
+          : [];
+      
+      setCatalogos({
+        ...catalogosRes.data,
+        usuarios: usuarios.map((u: any) => ({
+          id_usuario: u.id_usuario,
+          nombre: u.nombre
+        }))
+      });
     } catch (err: any) {
       console.error('Error al cargar catálogos:', err);
+      setCatalogos({
+        tipos: [],
+        estados: [],
+        prioridades: [],
+        usuarios: []
+      });
     }
   };
 
@@ -190,15 +213,15 @@ const TareaDetalle: React.FC = () => {
 
   const puedeCambiarEstado = () => {
     if (!tarea || !user) return false;
-    const esAdmin = user.rol_id === 1 || user.rol_id === '1';
-    const esSupervisor = user.rol_id === 2 || user.rol_id === '2';
+    const esAdmin = user.rol_id === 1;
+    const esSupervisor = user.rol_id === 2;
     return esAdmin || esSupervisor;
   };
 
   const puedeConfirmarDetalle = () => {
     if (!tarea || !user) return false;
-    const esOperario = user.rol_id === 3 || user.rol_id === '3';
-    const esSupervisor = user.rol_id === 2 || user.rol_id === '2';
+    const esOperario = user.rol_id === 3;
+    const esSupervisor = user.rol_id === 2;
     return esOperario || esSupervisor;
   };
 
@@ -617,7 +640,7 @@ const TareaDetalle: React.FC = () => {
                     required
                   >
                     <option value="">Seleccionar usuario</option>
-                    {catalogos?.usuarios.map((usuario) => (
+                    {catalogos?.usuarios.map((usuario: { id_usuario: number; nombre: string }) => (
                       <option key={usuario.id_usuario} value={usuario.id_usuario}>
                         {usuario.nombre}
                       </option>

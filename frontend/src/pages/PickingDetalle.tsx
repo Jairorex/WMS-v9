@@ -270,7 +270,7 @@ const PickingDetalle: React.FC = () => {
                   Completar Picking
                 </button>
               )}
-              {(user?.rol_id === 1 || user?.rol_id === '1' || user?.rol_id === 2 || user?.rol_id === '2') && (
+              {user && (user.rol_id === 1 || user.rol_id === 2) && (
                 <button
                   onClick={handleCancelarPicking}
                   className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
@@ -305,7 +305,7 @@ const PickingDetalle: React.FC = () => {
           <div className="mt-1 text-lg font-semibold text-gray-900">
             {picking.asignadoA?.nombre || 'Sin asignar'}
           </div>
-          {!picking.asignado_a && (user?.rol_id === 1 || user?.rol_id === '1' || user?.rol_id === 2 || user?.rol_id === '2') && (
+          {!picking.asignado_a && user && (user.rol_id === 1 || user.rol_id === 2) && (
             <select
               onChange={(e) => handleAsignar(parseInt(e.target.value))}
               className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"

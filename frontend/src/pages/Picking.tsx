@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { http } from '../lib/http';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,22 +19,6 @@ interface Picking {
   asignadoA: {
     id_usuario: number;
     nombre: string;
-  };
-}
-
-interface PickingDetalle {
-  id_picking_det: number;
-  id_producto: number;
-  id_ubicacion: number;
-  lote: string;
-  cant_objetivo: number;
-  cant_pickeada: number;
-  producto: {
-    nombre: string;
-    codigo_barras: string;
-  };
-  ubicacion: {
-    codigo: string;
   };
 }
 
@@ -176,7 +160,7 @@ const PickingList: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Gestión de Picking</h1>
-        {(user?.rol_id === 1 || user?.rol_id === '1' || user?.rol_id === 2 || user?.rol_id === '2') && (
+        {user && (user.rol_id === 1 || user.rol_id === 2) && (
           <button
             onClick={() => setShowModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
@@ -308,7 +292,7 @@ const PickingList: React.FC = () => {
                     >
                       Ver Detalle
                     </button>
-                    {(user?.rol_id === 1 || user?.rol_id === '1' || user?.rol_id === 2 || user?.rol_id === '2') && 
+                    {user && (user.rol_id === 1 || user.rol_id === 2) && 
                      picking.estado !== 'CANCELADO' && picking.estado !== 'Cancelado' &&
                      picking.estado !== 'COMPLETADO' && picking.estado !== 'Completado' && (
                       <button

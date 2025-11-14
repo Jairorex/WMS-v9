@@ -90,11 +90,11 @@ const Usuarios: React.FC = () => {
     setFormErrors({});
 
     try {
-      const payload = { ...formData };
+      const payload: Partial<UserFormData> = { ...formData };
       
       // Si estamos editando y no hay password, no enviarlo
       if (editingUser && !payload.password) {
-        delete payload.password;
+        delete (payload as any).password;
       }
 
       if (editingUser) {
