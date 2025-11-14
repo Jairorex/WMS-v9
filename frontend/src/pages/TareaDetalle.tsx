@@ -640,7 +640,7 @@ const TareaDetalle: React.FC = () => {
                     required
                   >
                     <option value="">Seleccionar usuario</option>
-                    {catalogos?.usuarios.map((usuario: { id_usuario: number; nombre: string }) => (
+                    {catalogos?.usuarios && Array.isArray(catalogos.usuarios) && catalogos.usuarios.map((usuario: { id_usuario: number; nombre: string }) => (
                       <option key={usuario.id_usuario} value={usuario.id_usuario}>
                         {usuario.nombre}
                       </option>

@@ -33,7 +33,6 @@ const IncidenciaDetalle: React.FC = () => {
   const { user } = useAuth();
   
   const [incidencia, setIncidencia] = useState<IncidenciaDetalle | null>(null);
-  const [puedeResolver, setPuedeResolver] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -48,7 +47,6 @@ const IncidenciaDetalle: React.FC = () => {
       setLoading(true);
       const response = await http.get(`/api/incidencias/${id}`);
       setIncidencia(response.data.incidencia);
-      setPuedeResolver(response.data.puede_resolver);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al cargar incidencia');
     } finally {
@@ -84,8 +82,8 @@ const IncidenciaDetalle: React.FC = () => {
 
   const puedeGestionarIncidencias = () => {
     if (!user) return false;
-    const esAdmin = user.rol_id === 1 || user.rol_id === '1';
-    const esSupervisor = user.rol_id === 2 || user.rol_id === '2';
+    const esAdmin = user.rol_id === 1;
+    const esSupervisor = user.rol_id === 2;
     return esAdmin || esSupervisor;
   };
 

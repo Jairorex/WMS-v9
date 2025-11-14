@@ -33,7 +33,7 @@ interface Ubicacion {
     codigo: string;
     nombre: string;
   };
-  inventario?: any[];
+  inventario?: Array<{ cantidad?: number }> | { cantidad?: number } | null;
 }
 
 interface Catalogos {

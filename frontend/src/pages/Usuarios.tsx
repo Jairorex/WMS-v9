@@ -25,7 +25,7 @@ interface UserFormData {
   nombre: string;
   usuario: string;
   email: string;
-  password: string;
+  password?: string;
   rol_id: number;
   activo: boolean;
 }
@@ -90,12 +90,13 @@ const Usuarios: React.FC = () => {
     setFormErrors({});
 
     try {
-      const payload: Partial<UserFormData> = { ...formData };
-      
       // Si estamos editando y no hay password, no enviarlo
-      if (editingUser && !payload.password) {
-        delete (payload as any).password;
-      }
+      const payload: Partial<UserFormData> = editingUser && !formData.password
+        ? (() => {
+            const { password, ...rest } = formData;
+            return rest;
+          })()
+        : { ...formData };
 
       if (editingUser) {
         await http.put(`/api/usuarios/${editingUser.id_usuario}`, payload);

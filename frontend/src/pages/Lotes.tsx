@@ -248,7 +248,7 @@ const Lotes: React.FC = () => {
 
   const puedeGestionarLotes = () => {
     if (!user) return false;
-    const esAdmin = user.rol_id === 1 || user.rol_id === '1';
+    const esAdmin = user.rol_id === 1;
     return esAdmin;
   };
 

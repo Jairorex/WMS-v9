@@ -31,6 +31,7 @@ interface Catalogos {
     id_producto: number;
     nombre: string;
     lote: string;
+    codigo_barra?: string;
   }>;
   prioridades: Array<{
     codigo: number;

@@ -153,8 +153,8 @@ const Incidencias: React.FC = () => {
 
   const puedeGestionarIncidencias = () => {
     if (!user) return false;
-    const esAdmin = user.rol_id === 1 || user.rol_id === '1';
-    const esSupervisor = user.rol_id === 2 || user.rol_id === '2';
+    const esAdmin = user.rol_id === 1;
+    const esSupervisor = user.rol_id === 2;
     return esAdmin || esSupervisor;
   };
 
