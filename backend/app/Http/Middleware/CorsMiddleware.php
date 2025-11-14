@@ -50,8 +50,36 @@ class CorsMiddleware
                         return $origin; // Devolver el origen específico
                     }
                 }
-                // En producción, usar el primer origen permitido o el origen si no hay lista
-                return $allowedOrigins[0] ?? $origin;
+                
+                // En producción, verificar si es un dominio de Vercel o similar
+                // Vercel usa el patrón: *.vercel.app o dominio personalizado
+                if (env('APP_ENV') === 'production') {
+                    // Permitir dominios de Vercel (preview y producción)
+                    if (preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+                        return $origin; // Devolver el origen específico de Vercel
+                    }
+                    // Permitir dominios personalizados de Vercel (si están en la lista)
+                    // O si el origen coincide con algún patrón permitido
+                    foreach ($allowedOrigins as $allowed) {
+                        // Si el origen permitido es un patrón o coincide
+                        if (strpos($allowed, '*') !== false) {
+                            $pattern = str_replace('*', '.*', preg_quote($allowed, '/'));
+                            if (preg_match("/^$pattern$/", $origin)) {
+                                return $origin;
+                            }
+                        }
+                    }
+                }
+                
+                // Si no coincide con ningún patrón, usar el primer origen permitido
+                // PERO solo si hay orígenes configurados, de lo contrario devolver el origen recibido
+                if (!empty($allowedOrigins)) {
+                    return $allowedOrigins[0];
+                }
+                
+                // Si no hay orígenes configurados y estamos en producción, devolver el origen recibido
+                // (útil para desarrollo o cuando se confía en el origen)
+                return $origin;
             }
             
             // Si no hay origen (apps móviles), usar '*' solo si no hay credenciales
