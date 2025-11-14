@@ -33,7 +33,7 @@ interface Ubicacion {
     codigo: string;
     nombre: string;
   };
-  inventario?: Array<{ cantidad?: number }> | { cantidad?: number } | null;
+  inventario?: Array<{ cantidad?: number; [key: string]: any }> | { cantidad?: number; [key: string]: any } | null;
 }
 
 interface Catalogos {
@@ -127,14 +127,15 @@ const Ubicaciones: React.FC = () => {
     
     let ocupacion = 0;
     if (Array.isArray(ubicacion.inventario)) {
-      ocupacion = ubicacion.inventario.reduce((sum: number, item: any) => {
-        if (item && typeof item === 'object' && 'cantidad' in item) {
+      ocupacion = ubicacion.inventario.reduce((sum: number, item: { cantidad?: number; [key: string]: any }) => {
+        if (item && typeof item === 'object' && 'cantidad' in item && item.cantidad !== undefined) {
           return sum + (Number(item.cantidad) || 0);
         }
         return sum;
       }, 0);
     } else if (typeof ubicacion.inventario === 'object' && ubicacion.inventario !== null && 'cantidad' in ubicacion.inventario) {
-      ocupacion = Number((ubicacion.inventario as any).cantidad) || 0;
+      const inv = ubicacion.inventario as { cantidad?: number; [key: string]: any };
+      ocupacion = inv.cantidad !== undefined ? (Number(inv.cantidad) || 0) : 0;
     }
     
     const porcentaje = ubicacion.capacidad > 0 ? (ocupacion / ubicacion.capacidad) * 100 : 0;
