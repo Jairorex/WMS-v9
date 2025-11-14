@@ -1,7 +1,26 @@
 import axios from 'axios';
 
+// Validar y normalizar la URL de la API
+const getApiUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  
+  // Si no hay URL configurada, usar localhost por defecto
+  if (!envUrl) {
+    return 'http://127.0.0.1:8000';
+  }
+  
+  // Si la URL no comienza con http:// o https://, agregar https://
+  if (!envUrl.startsWith('http://') && !envUrl.startsWith('https://')) {
+    console.warn('VITE_API_URL no incluye protocolo, agregando https://');
+    return `https://${envUrl}`;
+  }
+  
+  // Asegurar que la URL no termine con /
+  return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
+};
+
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000',
+  baseURL: getApiUrl(),
   withCredentials: true,
   headers: {
     'Accept': 'application/json',
