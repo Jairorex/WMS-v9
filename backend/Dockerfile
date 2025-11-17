@@ -23,9 +23,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
 
 # Instalar extensiones PHP para SQL Server
 RUN pecl install sqlsrv pdo_sqlsrv-5.12.0 \
-    && docker-php-ext-enable sqlsrv pdo_sqlsrv \
-    && echo "extension=sqlsrv.so" > /usr/local/etc/php/conf.d/sqlsrv.ini \
-    && echo "extension=pdo_sqlsrv.so" > /usr/local/etc/php/conf.d/pdo_sqlsrv.ini
+    && docker-php-ext-enable sqlsrv pdo_sqlsrv
 
 # Instalar otras extensiones PHP necesarias
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
@@ -50,4 +48,5 @@ RUN chmod -R 755 /app/storage \
 EXPOSE $PORT
 
 # Comando para iniciar el servidor (Railway proporciona PORT como variable de entorno)
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Convertir PORT a entero para evitar errores de tipo
+CMD sh -c "php artisan serve --host=0.0.0.0 --port=\${PORT:-8080}"
