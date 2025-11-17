@@ -46,7 +46,8 @@ RUN chmod -R 755 /app/storage \
 
 # Copiar y hacer ejecutable el script de inicio
 COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh && \
+    sed -i 's/\r$//' /usr/local/bin/start.sh  # Asegurar formato Unix
 
 # Exponer puerto (Railway usa variable de entorno PORT)
 EXPOSE $PORT
