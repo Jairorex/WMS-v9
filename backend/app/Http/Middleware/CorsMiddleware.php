@@ -15,6 +15,13 @@ class CorsMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Obtener el origen de la petición PRIMERO
+        $origin = $request->header('Origin');
+        
+        // SIEMPRE permitir dominios de Vercel (preview y producción)
+        // Esta verificación debe ser lo primero que hacemos
+        $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
+        
         // Obtener orígenes permitidos desde .env o usar valores por defecto
         $allowedOriginsEnv = env('CORS_ALLOWED_ORIGINS', '');
         $allowedOrigins = !empty($allowedOriginsEnv) 
@@ -35,16 +42,14 @@ class CorsMiddleware
         }
 
         // Función para determinar el origen permitido
-        $getAllowedOrigin = function($origin) use ($allowedOrigins) {
+        $getAllowedOrigin = function($origin) use ($allowedOrigins, $isVercelOrigin) {
             // Si no hay origen, devolver null (no establecer header)
             if (!$origin) {
                 return null;
             }
             
             // SIEMPRE permitir dominios de Vercel PRIMERO (preview y producción)
-            // Vercel usa el patrón: *.vercel.app o dominio personalizado
-            // Esto debe estar ANTES de otras verificaciones
-            if (preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+            if ($isVercelOrigin) {
                 return $origin; // Devolver el origen específico de Vercel
             }
             
@@ -87,8 +92,7 @@ class CorsMiddleware
             return $origin;
         };
 
-        // Obtener el origen de la petición
-        $origin = $request->header('Origin');
+        // Determinar el origen permitido
         $allowedOrigin = $getAllowedOrigin($origin);
         
         // Manejar peticiones OPTIONS (preflight)
@@ -111,25 +115,27 @@ class CorsMiddleware
 
         $response = $next($request);
 
-        // Si no hay origen permitido, devolver respuesta sin headers CORS
-        if (!$allowedOrigin) {
-            return $response;
-        }
-        
-        // NUNCA usar '*' cuando hay credenciales
-        $useCredentials = $allowedOrigin !== '*';
+        // Si es un origen de Vercel o hay un origen permitido, establecer headers CORS
+        if ($isVercelOrigin || $allowedOrigin) {
+            $finalOrigin = $isVercelOrigin ? $origin : $allowedOrigin;
+            
+            // NUNCA usar '*' cuando hay credenciales
+            $useCredentials = $finalOrigin !== '*';
 
-        // Forzar los headers CORS - SIEMPRE establecerlos
-        $response->headers->set('Access-Control-Allow-Origin', $allowedOrigin);
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN');
-        
-        // Solo establecer credentials si no usamos '*'
-        if ($useCredentials) {
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            // Forzar los headers CORS - SIEMPRE establecerlos
+            // Usar replace() en lugar de set() para asegurar que sobrescriba cualquier header existente
+            $response->headers->replace([
+                'Access-Control-Allow-Origin' => $finalOrigin,
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN',
+                'Access-Control-Max-Age' => '86400',
+            ]);
+            
+            // Solo establecer credentials si no usamos '*'
+            if ($useCredentials) {
+                $response->headers->set('Access-Control-Allow-Credentials', 'true', true);
+            }
         }
-        
-        $response->headers->set('Access-Control-Max-Age', '86400');
 
         return $response;
     }
