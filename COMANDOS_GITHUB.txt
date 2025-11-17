@@ -1,0 +1,34 @@
+=== COMANDOS PARA SUBIR A GITHUB ===
+
+1. AGREGAR TODOS LOS ARCHIVOS (excepto .sql, .txt, .md):
+   git add .
+
+2. VERIFICAR QUÉ SE AGREGÓ:
+   git status
+
+3. HACER EL PRIMER COMMIT:
+   git commit -m "Initial commit - WMS v9 Sistema de Gestión de Almacenes"
+
+4. CREAR REPOSITORIO EN GITHUB:
+   - Ve a https://github.com
+   - Click en "+" > "New repository"
+   - Nombre: WMS-v9
+   - NO marques "Initialize with README"
+   - Click "Create repository"
+
+5. CONECTAR CON GITHUB (reemplaza TU_USUARIO):
+   git remote add origin https://github.com/TU_USUARIO/WMS-v9.git
+
+6. SUBIR EL CÓDIGO:
+   git branch -M main
+   git push -u origin main
+
+=== VERIFICACIÓN ===
+Después de subir, revisa en GitHub que NO aparezcan:
+- Archivos .sql
+- Archivos .txt  
+- Archivos .md (excepto README.md)
+- node_modules/
+- vendor/
+- .env
+
