@@ -8,6 +8,8 @@ Sistema completo de gestión de almacenes desarrollado con Laravel (Backend) y R
 WMS-v9/
 ├── backend/          # API Laravel
 ├── frontend/         # Aplicación React
+├── docs/             # Documentación (.md)
+├── sql/              # Scripts SQL
 └── README.md         # Este archivo
 ```
 
