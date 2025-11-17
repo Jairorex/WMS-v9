@@ -22,8 +22,10 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar extensiones PHP para SQL Server
-RUN pecl install sqlsrv pdo_sqlsrv \
-    && docker-php-ext-enable sqlsrv pdo_sqlsrv
+RUN pecl install sqlsrv pdo_sqlsrv-5.12.0 \
+    && docker-php-ext-enable sqlsrv pdo_sqlsrv \
+    && echo "extension=sqlsrv.so" > /usr/local/etc/php/conf.d/sqlsrv.ini \
+    && echo "extension=pdo_sqlsrv.so" > /usr/local/etc/php/conf.d/pdo_sqlsrv.ini
 
 # Instalar otras extensiones PHP necesarias
 RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
