@@ -1,5 +1,5 @@
 # Dockerfile para Railway con soporte para SQL Server
-FROM php:8.2-fpm
+FROM php:8.2-cli
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     gnupg \
+    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Microsoft ODBC Driver para SQL Server
@@ -42,13 +43,12 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 COPY . .
 
 # Configurar permisos
-RUN chown -R www-data:www-data /app \
-    && chmod -R 755 /app/storage \
+RUN chmod -R 755 /app/storage \
     && chmod -R 755 /app/bootstrap/cache
 
-# Exponer puerto
-EXPOSE 8080
+# Exponer puerto (Railway usa variable de entorno PORT)
+EXPOSE $PORT
 
-# Comando para iniciar el servidor
-CMD php artisan serve --host=0.0.0.0 --port=8080
+# Comando para iniciar el servidor (Railway proporciona PORT como variable de entorno)
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
 
