@@ -48,9 +48,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token) {
           http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await http.get('/api/me');
-          setUser(response.data.usuario);
+          
+          // El backend devuelve: { success: true, data: { usuario: {...} } }
+          const responseData = response.data;
+          const usuario = responseData.success && responseData.data 
+            ? responseData.data.usuario 
+            : responseData.usuario || responseData.data?.usuario;
+          
+          if (usuario) {
+            setUser(usuario);
+          } else {
+            throw new Error('No se pudo obtener el usuario');
+          }
         }
       } catch (error) {
+        console.error('Error al inicializar autenticación:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       } finally {
@@ -66,15 +78,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await csrf();
       const response = await http.post('/api/auth/login', { usuario: login, password });
       
-      const { usuario, token } = response.data;
+      console.log('🔐 Respuesta completa del login:', response.data);
+      
+      // El backend devuelve: { success: true, message: "...", data: { usuario: {...}, token: "..." } }
+      const responseData = response.data;
+      
+      // Verificar si la respuesta tiene el formato estandarizado
+      let usuario, token;
+      
+      if (responseData.success && responseData.data) {
+        // Formato estandarizado: { success: true, data: { usuario, token } }
+        usuario = responseData.data.usuario;
+        token = responseData.data.token;
+      } else if (responseData.usuario && responseData.token) {
+        // Formato directo: { usuario, token }
+        usuario = responseData.usuario;
+        token = responseData.token;
+      } else {
+        console.error('❌ Formato de respuesta inesperado:', responseData);
+        throw new Error('Formato de respuesta del servidor no reconocido');
+      }
+      
+      if (!usuario || !token) {
+        throw new Error('La respuesta del servidor no contiene usuario o token');
+      }
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(usuario));
       
       http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(usuario);
+      
+      console.log('✅ Login exitoso');
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al iniciar sesión');
+      console.error('❌ Error en login:', error);
+      console.error('❌ Detalles:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      throw new Error(error.response?.data?.message || error.message || 'Error al iniciar sesión');
     }
   };
 
