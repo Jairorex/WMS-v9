@@ -75,7 +75,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (login: string, password: string) => {
     try {
-      await csrf();
+      // Intentar obtener CSRF cookie (no crítico si falla)
+      try {
+        await csrf();
+      } catch (csrfError) {
+        console.warn('⚠️ CSRF cookie no disponible, continuando con autenticación por token');
+      }
+      
       const response = await http.post('/api/auth/login', { usuario: login, password });
       
       console.log('🔐 Respuesta completa del login:', response.data);
@@ -112,12 +118,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('✅ Login exitoso');
     } catch (error: any) {
       console.error('❌ Error en login:', error);
-      console.error('❌ Detalles:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      throw new Error(error.response?.data?.message || error.message || 'Error al iniciar sesión');
+      
+      // Manejar diferentes tipos de errores
+      let errorMessage = 'Error al iniciar sesión';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        console.error('❌ Detalles del error:', {
+          status,
+          data,
+          message: error.message,
+        });
+        
+        if (status === 500) {
+          errorMessage = 'Error del servidor. Por favor, verifica que el backend esté funcionando correctamente.';
+        } else if (status === 401) {
+          errorMessage = data?.message || 'Credenciales incorrectas';
+        } else if (status === 403) {
+          errorMessage = data?.message || 'Acceso denegado';
+        } else if (data?.message) {
+          errorMessage = data.message;
+        } else {
+          errorMessage = `Error del servidor (${status})`;
+        }
+      } else if (error.request) {
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+      } else {
+        errorMessage = error.message || 'Error desconocido';
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 
