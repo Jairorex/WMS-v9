@@ -123,13 +123,11 @@ class CorsMiddleware
             $useCredentials = $finalOrigin !== '*';
 
             // Forzar los headers CORS - SIEMPRE establecerlos
-            // Usar replace() en lugar de set() para asegurar que sobrescriba cualquier header existente
-            $response->headers->replace([
-                'Access-Control-Allow-Origin' => $finalOrigin,
-                'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN',
-                'Access-Control-Max-Age' => '86400',
-            ]);
+            // Usar set() con true para forzar sobrescritura de headers existentes
+            $response->headers->set('Access-Control-Allow-Origin', $finalOrigin, true);
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS', true);
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN', true);
+            $response->headers->set('Access-Control-Max-Age', '86400', true);
             
             // Solo establecer credentials si no usamos '*'
             if ($useCredentials) {
