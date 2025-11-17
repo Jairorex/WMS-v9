@@ -36,14 +36,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de composer
-COPY composer.json composer.lock ./
-
-# Instalar dependencias de PHP
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
-# Copiar el resto de los archivos
+# Copiar todos los archivos primero
 COPY . .
+
+# Instalar dependencias de PHP (después de copiar todos los archivos para que artisan esté disponible)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Configurar permisos
 RUN chmod -R 755 /app/storage \
