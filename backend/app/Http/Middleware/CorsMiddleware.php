@@ -51,13 +51,14 @@ class CorsMiddleware
                     }
                 }
                 
-                // En producción, verificar si es un dominio de Vercel o similar
+                // SIEMPRE permitir dominios de Vercel (preview y producción)
                 // Vercel usa el patrón: *.vercel.app o dominio personalizado
+                if (preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
+                    return $origin; // Devolver el origen específico de Vercel
+                }
+                
+                // En producción, verificar patrones con wildcards
                 if (env('APP_ENV') === 'production') {
-                    // Permitir dominios de Vercel (preview y producción)
-                    if (preg_match('/^https:\/\/.*\.vercel\.app$/', $origin)) {
-                        return $origin; // Devolver el origen específico de Vercel
-                    }
                     // Permitir dominios personalizados de Vercel (si están en la lista)
                     // O si el origen coincide con algún patrón permitido
                     foreach ($allowedOrigins as $allowed) {
