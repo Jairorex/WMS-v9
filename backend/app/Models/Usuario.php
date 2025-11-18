@@ -11,7 +11,7 @@ class Usuario extends Authenticatable
     use HasFactory, HasApiTokens;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'usuarios';
+    protected $table = 'wms.usuarios';
     protected $primaryKey = 'id_usuario';
     public $timestamps = true;
 
