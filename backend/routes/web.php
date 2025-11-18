@@ -11,7 +11,10 @@ Route::get('/', function () {
 // Esta versión simplificada siempre devuelve 200 OK con headers CORS
 Route::match(['GET', 'OPTIONS'], '/sanctum/csrf-cookie', function () {
     $origin = request()->header('Origin');
-    $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
+    $isVercelOrigin = $origin && (
+        preg_match('/^https:\/\/.*\.vercel\.app$/', $origin) ||
+        preg_match('/^https:\/\/wms-v9\.vercel\.app$/', $origin)
+    );
     
     // Manejar peticiones OPTIONS (preflight)
     if (request()->isMethod('OPTIONS')) {

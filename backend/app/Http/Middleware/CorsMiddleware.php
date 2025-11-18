@@ -19,9 +19,13 @@ class CorsMiddleware
             // Obtener el origen de la petición
             $origin = $request->header('Origin');
             
-            // SIEMPRE permitir dominios de Vercel (preview y producción)
+            // SIEMPRE permitir dominios de Vercel (preview, producción y dominios personalizados)
             // Esta es la verificación más importante y debe ser simple
-            $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
+            // Coincide con: *.vercel.app (preview) y dominios personalizados como wms-v9.vercel.app
+            $isVercelOrigin = $origin && (
+                preg_match('/^https:\/\/.*\.vercel\.app$/', $origin) ||
+                preg_match('/^https:\/\/wms-v9\.vercel\.app$/', $origin)
+            );
             
             // Determinar el origen permitido - SIMPLIFICADO
             $allowedOrigin = null;
@@ -76,7 +80,10 @@ class CorsMiddleware
         } catch (\Exception $e) {
             // Si hay un error, devolver una respuesta básica con CORS
             $origin = $request->header('Origin');
-            $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
+            $isVercelOrigin = $origin && (
+                preg_match('/^https:\/\/.*\.vercel\.app$/', $origin) ||
+                preg_match('/^https:\/\/wms-v9\.vercel\.app$/', $origin)
+            );
             
             $response = response()->json(['error' => 'Internal server error'], 500);
             
