@@ -18,21 +18,42 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToGroup('api', \App\Http\Middleware\CorsMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Loggear todos los errores para debugging
+        $exceptions->report(function (\Throwable $e) {
+            // Loggear el error completo
+            \Log::error('Exception caught', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        });
+        
         // Manejar excepciones de manera más robusta
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            // Loggear el error
+            \Log::error('Rendering exception', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'url' => $request->fullUrl(),
+            ]);
+            
             // Si es una petición de API o tiene header Origin, devolver JSON con CORS
-            if ($request->expectsJson() || $request->header('Origin')) {
+            if ($request->expectsJson() || $request->header('Origin') || $request->is('api/*')) {
                 $origin = $request->header('Origin');
                 $isVercelOrigin = $origin && (
                     preg_match('/^https:\/\/.*\.vercel\.app$/', $origin) ||
                     preg_match('/^https:\/\/wms-v9\.vercel\.app$/', $origin)
                 );
                 
+                // Siempre mostrar el error en producción para debugging
                 $response = response()->json([
                     'message' => 'Internal server error',
-                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
-                    'file' => env('APP_DEBUG') ? $e->getFile() : null,
-                    'line' => env('APP_DEBUG') ? $e->getLine() : null,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'type' => get_class($e),
                 ], 500);
                 
                 if ($isVercelOrigin && $origin) {
