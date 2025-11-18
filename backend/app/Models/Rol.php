@@ -9,7 +9,7 @@ class Rol extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'roles';
+    protected $table = 'wms.roles';
     protected $primaryKey = 'id_rol';
     public $timestamps = true;
 
