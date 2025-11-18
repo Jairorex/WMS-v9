@@ -43,7 +43,7 @@ Route::match(['GET', 'OPTIONS'], '/sanctum/csrf-cookie', function () {
         ], 200);
         
         // Asegurar que los headers CORS se establezcan (el middleware debería hacerlo, pero por si acaso)
-        if ($isVercelOrigin) {
+        if ($isVercelOrigin && $origin) {
             $response->headers->set('Access-Control-Allow-Origin', $origin, true);
             $response->headers->set('Access-Control-Allow-Credentials', 'true', true);
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS', true);

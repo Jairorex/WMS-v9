@@ -18,5 +18,29 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToGroup('api', \App\Http\Middleware\CorsMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Manejar excepciones de manera más robusta
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            // Si es una petición de API o tiene header Origin, devolver JSON con CORS
+            if ($request->expectsJson() || $request->header('Origin')) {
+                $origin = $request->header('Origin');
+                $isVercelOrigin = $origin && (
+                    preg_match('/^https:\/\/.*\.vercel\.app$/', $origin) ||
+                    preg_match('/^https:\/\/wms-v9\.vercel\.app$/', $origin)
+                );
+                
+                $response = response()->json([
+                    'message' => 'Internal server error',
+                    'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                    'file' => env('APP_DEBUG') ? $e->getFile() : null,
+                    'line' => env('APP_DEBUG') ? $e->getLine() : null,
+                ], 500);
+                
+                if ($isVercelOrigin && $origin) {
+                    $response->headers->set('Access-Control-Allow-Origin', $origin, true);
+                    $response->headers->set('Access-Control-Allow-Credentials', 'true', true);
+                }
+                
+                return $response;
+            }
+        });
     })->create();
