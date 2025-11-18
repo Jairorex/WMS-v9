@@ -10,7 +10,7 @@ class WidgetDashboard extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'widgets_dashboard';
+    protected $table = 'wms.widgets_dashboard';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

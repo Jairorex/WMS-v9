@@ -9,7 +9,7 @@ class EstadoProducto extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'estados_producto';
+    protected $table = 'wms.estados_producto';
     protected $primaryKey = 'id_estado_producto';
     public $timestamps = false;
 

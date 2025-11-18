@@ -10,7 +10,7 @@ class KpiSistema extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'kpis_sistema';
+    protected $table = 'wms.kpis_sistema';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

@@ -10,7 +10,7 @@ class EstadisticaPicking extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'estadisticas_picking';
+    protected $table = 'wms.estadisticas_picking';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

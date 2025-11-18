@@ -10,7 +10,7 @@ class ConfiguracionNotificacionUsuario extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'configuracion_notificaciones_usuario';
+    protected $table = 'wms.configuracion_notificaciones_usuario';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

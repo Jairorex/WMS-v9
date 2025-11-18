@@ -10,7 +10,7 @@ class MetricaTiempoReal extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'metricas_tiempo_real';
+    protected $table = 'wms.metricas_tiempo_real';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

@@ -10,7 +10,7 @@ class MovimientoInventario extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'movimientos_inventario';
+    protected $table = 'wms.movimientos_inventario';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

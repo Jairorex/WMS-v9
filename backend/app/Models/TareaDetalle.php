@@ -9,7 +9,7 @@ class TareaDetalle extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'tarea_detalle';
+    protected $table = 'wms.tarea_detalle';
     protected $primaryKey = 'id_detalle';
     public $timestamps = true;
 

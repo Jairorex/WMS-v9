@@ -9,7 +9,7 @@ class Ubicacion extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'ubicaciones';
+    protected $table = 'wms.ubicaciones';
     protected $primaryKey = 'id_ubicacion';
     public $timestamps = true;
 

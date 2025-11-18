@@ -9,7 +9,7 @@ class EstadoTarea extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'estados_tarea';
+    protected $table = 'wms.estados_tarea';
     protected $primaryKey = 'id_estado_tarea';
     public $timestamps = false;
 

@@ -11,7 +11,7 @@ class OrdenSalida extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'orden_salida';
+    protected $table = 'wms.orden_salida';
     protected $primaryKey = 'id_orden';
     public $timestamps = true;
 

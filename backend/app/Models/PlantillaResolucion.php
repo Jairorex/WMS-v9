@@ -10,7 +10,7 @@ class PlantillaResolucion extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'plantillas_resolucion';
+    protected $table = 'wms.plantillas_resolucion';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

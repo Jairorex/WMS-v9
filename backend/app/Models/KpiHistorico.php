@@ -10,7 +10,7 @@ class KpiHistorico extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'kpis_historicos';
+    protected $table = 'wms.kpis_historicos';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

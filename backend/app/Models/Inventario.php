@@ -11,7 +11,7 @@ class Inventario extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'inventario';
+    protected $table = 'wms.inventario';
     protected $primaryKey = 'id_inventario';
     public $timestamps = true;
 

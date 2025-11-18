@@ -11,7 +11,7 @@ class Lote extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'lotes';
+    protected $table = 'wms.lotes';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

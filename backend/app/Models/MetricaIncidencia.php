@@ -10,7 +10,7 @@ class MetricaIncidencia extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'metricas_incidencias';
+    protected $table = 'wms.metricas_incidencias';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

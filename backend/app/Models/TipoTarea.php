@@ -10,7 +10,7 @@ class TipoTarea extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'tipos_tarea';
+    protected $table = 'wms.tipos_tarea';
     protected $primaryKey = 'id_tipo_tarea';
     public $timestamps = false;
 

@@ -9,7 +9,7 @@ class PickingDetalle extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'picking_det';
+    protected $table = 'wms.picking_det';
     protected $primaryKey = 'id_picking_det';
     public $timestamps = true;
 

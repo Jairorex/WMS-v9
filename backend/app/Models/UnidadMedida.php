@@ -10,7 +10,7 @@ class UnidadMedida extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'unidad_de_medida';
+    protected $table = 'wms.unidad_de_medida';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

@@ -10,7 +10,7 @@ class PlantillaEmail extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'plantillas_email';
+    protected $table = 'wms.plantillas_email';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

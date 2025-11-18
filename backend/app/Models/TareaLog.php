@@ -10,7 +10,7 @@ class TareaLog extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'tareas_log';
+    protected $table = 'wms.tareas_log';
     protected $primaryKey = 'id_log';
     public $timestamps = true;
     const CREATED_AT = 'created_at';

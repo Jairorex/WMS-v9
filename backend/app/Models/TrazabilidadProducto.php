@@ -10,7 +10,7 @@ class TrazabilidadProducto extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'trazabilidad_productos';
+    protected $table = 'wms.trazabilidad_productos';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

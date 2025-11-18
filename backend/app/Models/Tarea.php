@@ -9,7 +9,7 @@ class Tarea extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'tareas';
+    protected $table = 'wms.tareas';
     protected $primaryKey = 'id_tarea';
     public $timestamps = true;
     const CREATED_AT = 'fecha_creacion';
@@ -56,7 +56,7 @@ class Tarea extends Model
 
     public function usuarios()
     {
-        return $this->belongsToMany(Usuario::class, 'tarea_usuario', 'id_tarea', 'id_usuario')
+        return $this->belongsToMany(Usuario::class, 'wms.tarea_usuario', 'id_tarea', 'id_usuario')
                     ->withPivot('es_responsable', 'asignado_desde', 'asignado_hasta');
     }
 

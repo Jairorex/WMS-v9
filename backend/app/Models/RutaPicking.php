@@ -10,7 +10,7 @@ class RutaPicking extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'rutas_picking';
+    protected $table = 'wms.rutas_picking';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

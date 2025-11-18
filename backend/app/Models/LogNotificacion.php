@@ -10,7 +10,7 @@ class LogNotificacion extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'logs_notificaciones';
+    protected $table = 'wms.logs_notificaciones';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

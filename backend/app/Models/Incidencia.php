@@ -9,7 +9,7 @@ class Incidencia extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'incidencias';
+    protected $table = 'wms.incidencias';
     protected $primaryKey = 'id_incidencia';
     public $timestamps = true;
 

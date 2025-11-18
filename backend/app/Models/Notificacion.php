@@ -10,7 +10,7 @@ class Notificacion extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'notificaciones';
+    protected $table = 'wms.notificaciones';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

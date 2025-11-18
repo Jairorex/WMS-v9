@@ -9,7 +9,7 @@ class OrdenSalidaDetalle extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'orden_salida_det';
+    protected $table = 'wms.orden_salida_det';
     protected $primaryKey = 'id_det';
     public $timestamps = true;
 

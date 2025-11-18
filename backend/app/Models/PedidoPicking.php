@@ -10,7 +10,7 @@ class PedidoPicking extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'pedidos_picking';
+    protected $table = 'wms.pedidos_picking';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

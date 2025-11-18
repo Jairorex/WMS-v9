@@ -10,7 +10,7 @@ class SeguimientoIncidencia extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'seguimiento_incidencias';
+    protected $table = 'wms.seguimiento_incidencias';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

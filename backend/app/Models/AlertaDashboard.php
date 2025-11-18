@@ -10,7 +10,7 @@ class AlertaDashboard extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'alertas_dashboard';
+    protected $table = 'wms.alertas_dashboard';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

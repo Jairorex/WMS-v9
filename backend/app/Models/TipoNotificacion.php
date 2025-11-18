@@ -10,7 +10,7 @@ class TipoNotificacion extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'tipos_notificacion';
+    protected $table = 'wms.tipos_notificacion';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

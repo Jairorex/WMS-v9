@@ -10,7 +10,7 @@ class ColaNotificacion extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'cola_notificaciones';
+    protected $table = 'wms.cola_notificaciones';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

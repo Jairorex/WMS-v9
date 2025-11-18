@@ -10,7 +10,7 @@ class OleadaPicking extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'oleadas_picking';
+    protected $table = 'wms.oleadas_picking';
     protected $primaryKey = 'id';
     public $timestamps = true;
 

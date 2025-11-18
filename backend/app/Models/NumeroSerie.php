@@ -10,7 +10,7 @@ class NumeroSerie extends Model
     use HasFactory;
 
     protected $connection = 'sqlsrv';
-    protected $table = 'numeros_serie';
+    protected $table = 'wms.numeros_serie';
     protected $primaryKey = 'id';
     public $timestamps = true;
 
