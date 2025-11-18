@@ -126,14 +126,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const status = error.response.status;
         const data = error.response.data;
         
+        // Mostrar el error completo del backend
         console.error('❌ Detalles del error:', {
           status,
-          data,
+          data: JSON.stringify(data, null, 2),
           message: error.message,
         });
         
+        // Mostrar el error específico del backend si está disponible
+        if (data?.error) {
+          console.error('🔴 Error del backend:', data.error);
+          console.error('📁 Archivo:', data.file);
+          console.error('📍 Línea:', data.line);
+          console.error('🔖 Tipo:', data.type);
+        }
+        
         if (status === 500) {
-          errorMessage = 'Error del servidor. Por favor, verifica que el backend esté funcionando correctamente.';
+          // Mostrar el error específico del backend si está disponible
+          if (data?.error) {
+            errorMessage = `Error del servidor: ${data.error}`;
+            if (data?.file && data?.line) {
+              errorMessage += ` (${data.file}:${data.line})`;
+            }
+          } else {
+            errorMessage = 'Error del servidor. Por favor, verifica que el backend esté funcionando correctamente.';
+          }
         } else if (status === 401) {
           errorMessage = data?.message || 'Credenciales incorrectas';
         } else if (status === 403) {
