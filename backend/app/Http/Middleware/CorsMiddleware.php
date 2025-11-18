@@ -15,61 +15,77 @@ class CorsMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Obtener el origen de la petición
-        $origin = $request->header('Origin');
-        
-        // SIEMPRE permitir dominios de Vercel (preview y producción)
-        // Esta es la verificación más importante y debe ser simple
-        $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
-        
-        // Determinar el origen permitido - SIMPLIFICADO
-        $allowedOrigin = null;
-        
-        if ($isVercelOrigin) {
-            // Si es Vercel, siempre permitirlo
-            $allowedOrigin = $origin;
-        } elseif ($origin) {
-            // Obtener orígenes permitidos desde .env
-            $allowedOriginsEnv = env('CORS_ALLOWED_ORIGINS', '');
-            if (!empty($allowedOriginsEnv)) {
-                $allowedOrigins = array_map('trim', explode(',', $allowedOriginsEnv));
-                if (in_array($origin, $allowedOrigins)) {
+        try {
+            // Obtener el origen de la petición
+            $origin = $request->header('Origin');
+            
+            // SIEMPRE permitir dominios de Vercel (preview y producción)
+            // Esta es la verificación más importante y debe ser simple
+            $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
+            
+            // Determinar el origen permitido - SIMPLIFICADO
+            $allowedOrigin = null;
+            
+            if ($isVercelOrigin) {
+                // Si es Vercel, siempre permitirlo
+                $allowedOrigin = $origin;
+            } elseif ($origin) {
+                // Obtener orígenes permitidos desde .env
+                $allowedOriginsEnv = env('CORS_ALLOWED_ORIGINS', '');
+                if (!empty($allowedOriginsEnv)) {
+                    $allowedOrigins = array_map('trim', explode(',', $allowedOriginsEnv));
+                    if (in_array($origin, $allowedOrigins)) {
+                        $allowedOrigin = $origin;
+                    }
+                }
+                
+                // En desarrollo, permitir localhost
+                if (env('APP_ENV') !== 'production' && preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1)(:\d+)?$/', $origin)) {
                     $allowedOrigin = $origin;
                 }
             }
             
-            // En desarrollo, permitir localhost
-            if (env('APP_ENV') !== 'production' && preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1)(:\d+)?$/', $origin)) {
-                $allowedOrigin = $origin;
+            // Manejar peticiones OPTIONS (preflight) - CRÍTICO para CORS
+            if ($request->isMethod('OPTIONS')) {
+                if ($allowedOrigin) {
+                    return response('', 200)
+                        ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN')
+                        ->header('Access-Control-Allow-Credentials', 'true')
+                        ->header('Access-Control-Max-Age', '86400');
+                }
+                // Si no hay origen permitido, devolver 200 sin headers CORS
+                return response('', 200);
             }
-        }
-        
-        // Manejar peticiones OPTIONS (preflight) - CRÍTICO para CORS
-        if ($request->isMethod('OPTIONS')) {
-            if ($allowedOrigin) {
-                return response('', 200)
-                    ->header('Access-Control-Allow-Origin', $allowedOrigin)
-                    ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN')
-                    ->header('Access-Control-Allow-Credentials', 'true')
-                    ->header('Access-Control-Max-Age', '86400');
+
+            // Procesar la petición normal
+            $response = $next($request);
+
+            // Establecer headers CORS en la respuesta - SIEMPRE para Vercel
+            if ($isVercelOrigin || $allowedOrigin) {
+                $finalOrigin = $isVercelOrigin ? $origin : $allowedOrigin;
+                $response->headers->set('Access-Control-Allow-Origin', $finalOrigin, true);
+                $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS', true);
+                $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN', true);
+                $response->headers->set('Access-Control-Allow-Credentials', 'true', true);
+                $response->headers->set('Access-Control-Max-Age', '86400', true);
             }
-            // Si no hay origen permitido, devolver 200 sin headers CORS
-            return response('', 200);
+
+            return $response;
+        } catch (\Exception $e) {
+            // Si hay un error, devolver una respuesta básica con CORS
+            $origin = $request->header('Origin');
+            $isVercelOrigin = $origin && preg_match('/^https:\/\/.*\.vercel\.app$/', $origin);
+            
+            $response = response()->json(['error' => 'Internal server error'], 500);
+            
+            if ($isVercelOrigin) {
+                $response->headers->set('Access-Control-Allow-Origin', $origin, true);
+                $response->headers->set('Access-Control-Allow-Credentials', 'true', true);
+            }
+            
+            return $response;
         }
-
-        // Procesar la petición normal
-        $response = $next($request);
-
-        // Establecer headers CORS en la respuesta
-        if ($allowedOrigin) {
-            $response->headers->set('Access-Control-Allow-Origin', $allowedOrigin, true);
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS', true);
-            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN', true);
-            $response->headers->set('Access-Control-Allow-Credentials', 'true', true);
-            $response->headers->set('Access-Control-Max-Age', '86400', true);
-        }
-
-        return $response;
     }
 }
