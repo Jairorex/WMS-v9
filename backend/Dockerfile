@@ -44,13 +44,14 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 RUN chmod -R 755 /app/storage \
     && chmod -R 755 /app/bootstrap/cache
 
-# Copiar y hacer ejecutable el script de inicio
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh && \
-    sed -i 's/\r$//' /usr/local/bin/start.sh  # Asegurar formato Unix
+# Copiar y hacer ejecutable el script de inicio en el directorio de trabajo
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh && \
+    sed -i 's/\r$//' /app/start.sh  # Asegurar formato Unix
 
-# Exponer puerto (Railway usa variable de entorno PORT)
-EXPOSE $PORT
+# Exponer puerto (Railway maneja esto automáticamente, pero lo exponemos por claridad)
+EXPOSE 8080
 
-# Comando para iniciar el servidor usando el script
-CMD ["/usr/local/bin/start.sh"]
+# Comando para iniciar el servidor usando el script desde el directorio de trabajo
+WORKDIR /app
+CMD ["/app/start.sh"]
