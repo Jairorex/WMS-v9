@@ -1,7 +1,25 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+// URL del backend en Railway
+const RAILWAY_API_URL = 'https://wms-v9-production.up.railway.app/api';
+
+// Configuración: Cambiar a true para usar Railway siempre, false para usar localhost en desarrollo
+const FORCE_RAILWAY = true; // Cambiar a false si quieres usar localhost en desarrollo
 
 // Detectar entorno y configurar URL base
 const getApiBaseUrl = () => {
+  // Si FORCE_RAILWAY está activado, siempre usar Railway
+  if (FORCE_RAILWAY) {
+    return RAILWAY_API_URL;
+  }
+
+  // Intentar obtener la URL desde las constantes de Expo (app.json)
+  const apiUrlFromConfig = Constants.expoConfig?.extra?.apiUrl;
+  if (apiUrlFromConfig) {
+    return apiUrlFromConfig;
+  }
+
   // En desarrollo, detectar si es emulador, dispositivo físico o web
   if (__DEV__) {
     if (Platform.OS === 'web') {
@@ -18,17 +36,19 @@ const getApiBaseUrl = () => {
   }
   
   // Producción: usar la URL del servidor en Railway
-  // Puedes cambiar esto según necesites
-  return 'https://wms-v9-production.up.railway.app/api';
+  return RAILWAY_API_URL;
 };
 
 // URL base de la API
 export const API_BASE_URL = getApiBaseUrl();
 
-// Log para debug
-if (__DEV__) {
-  console.log('🌐 API Base URL:', API_BASE_URL);
-  console.log('🌐 Platform:', Platform.OS);
+// Log para debug (siempre mostrar la URL para verificar la conexión)
+console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('🌐 Platform:', Platform.OS);
+if (FORCE_RAILWAY) {
+  console.log('✅ Conectado a Railway (Producción)');
+} else {
+  console.log('🔧 Modo desarrollo - usando localhost');
 }
 
 // Timeouts
@@ -59,6 +79,8 @@ export const API_ENDPOINTS = {
   INVENTARIO: {
     BASE: '/inventario',
     AJUSTAR: (id: number) => `/inventario/${id}/ajustar`,
+    POR_UBICACION: (codigo: string) => `/inventario/por-ubicacion/${codigo}`,
+    POR_PRODUCTO: (codigo: string) => `/inventario/por-producto/${codigo}`,
   },
   // Tareas
   TAREAS: {
@@ -88,6 +110,7 @@ export const API_ENDPOINTS = {
     ASIGNAR: (id: number) => `/picking/${id}/asignar`,
     COMPLETAR: (id: number) => `/picking/${id}/completar`,
     CANCELAR: (id: number) => `/picking/${id}/cancelar`,
+    PICK_ITEM: (id: number) => `/picking/${id}/pick-item`,
   },
   // Órdenes de Salida
   ORDENES_SALIDA: {

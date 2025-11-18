@@ -1,15 +1,24 @@
-# 🔧 Configuración para Backend Local
+# 🔧 Configuración del Backend
 
 ## ✅ Configuración Actual
 
-La aplicación móvil está configurada para conectarse al backend local en desarrollo.
+La aplicación móvil está configurada para conectarse al backend en Railway por defecto.
 
 ### URLs por Plataforma
 
-- **Web:** `http://127.0.0.1:8000/api`
-- **Android Emulador:** `http://10.0.2.2:8000/api`
-- **iOS Emulador:** `http://127.0.0.1:8000/api`
-- **Producción:** `https://wms-v9-production.up.railway.app/api`
+- **Railway (Producción):** `https://wms-v9-production.up.railway.app/api` ⭐ **ACTUAL**
+- **Web (Desarrollo):** `http://127.0.0.1:8000/api`
+- **Android Emulador (Desarrollo):** `http://10.0.2.2:8000/api`
+- **iOS Emulador (Desarrollo):** `http://127.0.0.1:8000/api`
+
+## 🔄 Cambiar entre Railway y Localhost
+
+Para cambiar entre Railway y localhost, edita `Movil/src/config/api.ts`:
+
+```typescript
+// Cambiar a false para usar localhost en desarrollo
+const FORCE_RAILWAY = true; // true = Railway, false = localhost
+```
 
 ## 🚀 Cómo Usar
 
