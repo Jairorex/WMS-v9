@@ -345,7 +345,7 @@ const Packing: React.FC = () => {
 
       {/* Modal de creación */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style={{ zIndex: 9999 }}>
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
             <h2 className="text-2xl font-bold mb-4">Nuevo Packing</h2>
             <form onSubmit={handleCrearPacking}>

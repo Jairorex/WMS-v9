@@ -110,6 +110,8 @@ const Tareas: React.FC = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedTarea, setSelectedTarea] = useState<TareaUnificada | null>(null);
   const [editingTarea, setEditingTarea] = useState<Tarea | null>(null);
   const [formData, setFormData] = useState({
     tipo_tarea_id: '',
@@ -274,23 +276,31 @@ const Tareas: React.FC = () => {
   const handleCrearTarea = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       // Preparar datos para enviar
       const dataToSend = {
-        tipo_tarea_id: formData.tipo_tarea_id,
+        tipo_tarea_id: parseInt(formData.tipo_tarea_id),
         prioridad: formData.prioridad,
         descripcion: formData.descripcion,
-        asignado_a: formData.asignado_a || null,
+        asignado_a: formData.asignado_a ? parseInt(formData.asignado_a) : null,
         fecha_vencimiento: formData.fecha_vencimiento || null
       };
       
-      await http.post('/api/tareas', dataToSend);
-      setShowModal(false);
-      resetForm();
-      fetchTareas();
+      const response = await http.post('/api/tareas', dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowModal(false);
+        resetForm();
+        fetchTareas();
+      } else {
+        setError(response.data.message || 'Error al crear tarea');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al crear tarea');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al crear tarea';
+      setError(errorMessage);
+      console.error('Error al crear tarea:', err);
     } finally {
       setSubmitting(false);
     }
@@ -301,23 +311,31 @@ const Tareas: React.FC = () => {
     if (!editingTarea) return;
     
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        tipo_tarea_id: formData.tipo_tarea_id,
+        tipo_tarea_id: parseInt(formData.tipo_tarea_id),
         prioridad: formData.prioridad,
         descripcion: formData.descripcion,
-        asignado_a: formData.asignado_a || null,
+        asignado_a: formData.asignado_a ? parseInt(formData.asignado_a) : null,
         fecha_vencimiento: formData.fecha_vencimiento || null
       };
       
-      await http.put(`/api/tareas/${editingTarea.id_tarea}`, dataToSend);
-      setShowEditModal(false);
-      setEditingTarea(null);
-      resetForm();
-      fetchTareas();
+      const response = await http.put(`/api/tareas/${editingTarea.id_tarea}`, dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowEditModal(false);
+        setEditingTarea(null);
+        resetForm();
+        fetchTareas();
+      } else {
+        setError(response.data.message || 'Error al actualizar tarea');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar tarea');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al actualizar tarea';
+      setError(errorMessage);
+      console.error('Error al actualizar tarea:', err);
     } finally {
       setSubmitting(false);
     }
@@ -346,7 +364,11 @@ const Tareas: React.FC = () => {
   };
 
   const handleVerDetalle = (id: number, tipo?: string) => {
-    if (tipo === 'picking') {
+    const tarea = tareas.find(t => t.id === id);
+    if (tarea && tipo !== 'picking' && tipo !== 'packing') {
+      setSelectedTarea(tarea);
+      setShowDetailModal(true);
+    } else if (tipo === 'picking') {
       navigate(`/picking/${id}`);
     } else if (tipo === 'packing') {
       navigate(`/ordenes-salida/${id}`);
@@ -712,10 +734,18 @@ const Tareas: React.FC = () => {
                       ) : tarea.id_tarea ? (
                         <>
                           <button
-                            onClick={() => handleVerDetalle(tarea.id_tarea!)}
-                            className="text-blue-600 hover:text-blue-900"
+                            onClick={() => handleVerDetalle(tarea.id_tarea!, tarea.tipo)}
+                            className="text-blue-600 hover:text-blue-900 mr-2"
+                            title="Ver detalles"
                           >
                             Detalle
+                          </button>
+                          <button
+                            onClick={() => navigate(`/tareas/${tarea.id_tarea}`)}
+                            className="text-purple-600 hover:text-purple-900 text-xs"
+                            title="Ver página completa"
+                          >
+                            Ver más
                           </button>
                           {(String(user?.rol_id) === '1' || String(user?.rol_id) === '2') && (
                             <button
@@ -755,8 +785,8 @@ const Tareas: React.FC = () => {
 
       {/* Modal para crear tarea */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Nueva Tarea
@@ -855,8 +885,8 @@ const Tareas: React.FC = () => {
 
       {/* Modal para editar tarea */}
       {showEditModal && editingTarea && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Editar Tarea: #{editingTarea.id_tarea}
@@ -977,6 +1007,139 @@ const Tareas: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de detalles flotante */}
+      {showDetailModal && selectedTarea && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Detalles de Tarea: #{selectedTarea.id}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedTarea(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">ID:</label>
+                    <p className="text-sm text-gray-900">#{selectedTarea.id}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Tipo:</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedTarea.tipo_tarea?.nombre || getTipoLabel(selectedTarea.tipo)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Estado:</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getEstadoColor(selectedTarea.estado, selectedTarea.tipo)}`}>
+                      {selectedTarea.estado}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Prioridad:</label>
+                    {selectedTarea.prioridad && (
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPrioridadColor(selectedTarea.prioridad.toString())}`}>
+                        {selectedTarea.prioridad}
+                      </span>
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-500">Descripción:</label>
+                    <p className="text-sm text-gray-900">{selectedTarea.descripcion || selectedTarea.cliente || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Asignado a:</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedTarea.asignadoA ? selectedTarea.asignadoA.nombre : 
+                       selectedTarea.usuarios && selectedTarea.usuarios.length > 0 ? 
+                       selectedTarea.usuarios[0].nombre : 'Sin asignar'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Fecha Creación:</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedTarea.fecha_creacion ? new Date(selectedTarea.fecha_creacion).toLocaleDateString() : '-'}
+                    </p>
+                  </div>
+                </div>
+                
+                {selectedTarea.detalles && selectedTarea.detalles.length > 0 && (
+                  <div className="border-t pt-4">
+                    <label className="block text-sm font-medium text-gray-500 mb-2">Detalles:</label>
+                    <div className="space-y-2">
+                      {selectedTarea.detalles.map((detalle: any, idx: number) => (
+                        <div key={idx} className="bg-gray-50 p-2 rounded text-sm">
+                          <p className="font-medium">{detalle.producto?.nombre || 'Producto'}</p>
+                          <p className="text-gray-600">
+                            Solicitado: {detalle.cantidad_solicitada || detalle.cant_solicitada || 0} | 
+                            Confirmado: {detalle.cantidad_confirmada || detalle.cant_confirmada || 0}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedTarea(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                  >
+                    Cerrar
+                  </button>
+                  {selectedTarea.id_tarea && (String(user?.rol_id) === '1' || String(user?.rol_id) === '2') && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        const tareaEdit: any = {
+                          id_tarea: selectedTarea.id_tarea,
+                          tipo_tarea_id: selectedTarea.tipo_tarea?.codigo,
+                          prioridad: selectedTarea.prioridad,
+                          descripcion: selectedTarea.descripcion,
+                          usuarios: selectedTarea.usuarios,
+                          fecha_vencimiento: selectedTarea.fecha_vencimiento
+                        };
+                        openEditModal(tareaEdit);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                    >
+                      Editar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedTarea(null);
+                      if (selectedTarea.id_tarea) {
+                        navigate(`/tareas/${selectedTarea.id_tarea}`);
+                      }
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    Ver Página Completa
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

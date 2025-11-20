@@ -65,6 +65,11 @@ class Tarea extends Model
         return $this->hasMany(Incidencia::class, 'id_tarea', 'id_tarea');
     }
 
+    public function logs()
+    {
+        return $this->hasMany(TareaLog::class, 'id_tarea', 'id_tarea');
+    }
+
     // Scopes
     public function scopePorEstado($query, $estado)
     {

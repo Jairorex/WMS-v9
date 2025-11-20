@@ -146,19 +146,26 @@ const OrdenesSalida: React.FC = () => {
 
   const handleCrearOrden = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
-      await http.post('/api/ordenes-salida', formData);
-      setShowModal(false);
-      setFormData({
-        cliente: '',
-        fecha_compromiso: '',
-        prioridad: 3,
-        detalles: [{ id_producto: 0, cant_solicitada: 1, lote_preferente: '' }]
-      });
-      fetchOrdenes();
+      const response = await http.post('/api/ordenes-salida', formData);
+      
+      if (response.data.success !== false) {
+        setShowModal(false);
+        setFormData({
+          cliente: '',
+          fecha_compromiso: '',
+          prioridad: 3,
+          detalles: [{ id_producto: 0, cant_solicitada: 1, lote_preferente: '' }]
+        });
+        fetchOrdenes();
+      } else {
+        setError(response.data.message || 'Error al crear orden de salida');
+      }
     } catch (err: any) {
-      setError('Error al crear orden de salida');
-      console.error(err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al crear orden de salida';
+      setError(errorMessage);
+      console.error('Error al crear orden:', err);
     }
   };
 
@@ -423,7 +430,7 @@ const OrdenesSalida: React.FC = () => {
 
       {/* Modal para crear orden */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
           <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">

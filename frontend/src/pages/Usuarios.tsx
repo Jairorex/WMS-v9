@@ -98,21 +98,28 @@ const Usuarios: React.FC = () => {
           })()
         : { ...formData };
 
+      let response;
       if (editingUser) {
-        await http.put(`/api/usuarios/${editingUser.id_usuario}`, payload);
+        response = await http.put(`/api/usuarios/${editingUser.id_usuario}`, payload);
       } else {
-        await http.post('/api/usuarios', payload);
+        response = await http.post('/api/usuarios', payload);
       }
 
-      setShowModal(false);
-      setEditingUser(null);
-      resetForm();
-      fetchUsuarios();
+      if (response.data.success !== false) {
+        setShowModal(false);
+        setEditingUser(null);
+        resetForm();
+        fetchUsuarios();
+      } else {
+        setError(response.data.message || 'Error al guardar usuario');
+      }
     } catch (err: any) {
       if (err.response?.data?.errors) {
         setFormErrors(err.response.data.errors);
       } else {
-        setError(err.response?.data?.message || 'Error al guardar usuario');
+        const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al guardar usuario';
+        setError(errorMessage);
+        console.error('Error al guardar usuario:', err);
       }
     } finally {
       setSubmitting(false);
@@ -271,7 +278,7 @@ const Usuarios: React.FC = () => {
 
       {/* Modal para crear/editar usuario */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">

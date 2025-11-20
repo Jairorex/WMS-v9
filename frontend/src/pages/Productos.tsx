@@ -45,6 +45,8 @@ const Productos: React.FC = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
   const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -108,20 +110,34 @@ const Productos: React.FC = () => {
   const handleCrearProducto = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
-        precio: formData.precio ? parseFloat(formData.precio) : null,
-        fecha_caducidad: formData.fecha_caducidad || null
+        nombre: formData.nombre,
+        descripcion: formData.descripcion || null,
+        codigo_barra: formData.codigo_barra || null,
+        lote: formData.lote,
+        estado_producto_id: parseInt(formData.estado_producto_id),
+        fecha_caducidad: formData.fecha_caducidad || null,
+        unidad_medida_id: formData.unidad_medida_id ? parseInt(formData.unidad_medida_id) : null,
+        stock_minimo: formData.stock_minimo,
+        precio: formData.precio ? parseFloat(formData.precio) : null
       };
       
-      await http.post('/api/productos', dataToSend);
-      setShowModal(false);
-      resetForm();
-      fetchProductos();
+      const response = await http.post('/api/productos', dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowModal(false);
+        resetForm();
+        fetchProductos();
+      } else {
+        setError(response.data.message || 'Error al crear producto');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al crear producto');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al crear producto';
+      setError(errorMessage);
+      console.error('Error al crear producto:', err);
     } finally {
       setSubmitting(false);
     }
@@ -132,21 +148,35 @@ const Productos: React.FC = () => {
     if (!editingProducto) return;
     
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
-        precio: formData.precio ? parseFloat(formData.precio) : null,
-        fecha_caducidad: formData.fecha_caducidad || null
+        nombre: formData.nombre,
+        descripcion: formData.descripcion || null,
+        codigo_barra: formData.codigo_barra || null,
+        lote: formData.lote,
+        estado_producto_id: parseInt(formData.estado_producto_id),
+        fecha_caducidad: formData.fecha_caducidad || null,
+        unidad_medida_id: formData.unidad_medida_id ? parseInt(formData.unidad_medida_id) : null,
+        stock_minimo: formData.stock_minimo,
+        precio: formData.precio ? parseFloat(formData.precio) : null
       };
       
-      await http.put(`/api/productos/${editingProducto.id_producto}`, dataToSend);
-      setShowEditModal(false);
-      setEditingProducto(null);
-      resetForm();
-      fetchProductos();
+      const response = await http.put(`/api/productos/${editingProducto.id_producto}`, dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowEditModal(false);
+        setEditingProducto(null);
+        resetForm();
+        fetchProductos();
+      } else {
+        setError(response.data.message || 'Error al actualizar producto');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar producto');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al actualizar producto';
+      setError(errorMessage);
+      console.error('Error al actualizar producto:', err);
     } finally {
       setSubmitting(false);
     }
@@ -183,7 +213,13 @@ const Productos: React.FC = () => {
   };
 
   const handleVerDetalle = (id: number) => {
-    navigate(`/productos/${id}`);
+    const producto = productos.find(p => p.id_producto === id);
+    if (producto) {
+      setSelectedProducto(producto);
+      setShowDetailModal(true);
+    } else {
+      navigate(`/productos/${id}`);
+    }
   };
 
   const handleActivar = async (id: number) => {
@@ -217,7 +253,8 @@ const Productos: React.FC = () => {
   const puedeGestionarProductos = () => {
     if (!user) return false;
     const esAdmin = user.rol_id === 1;
-    return esAdmin;
+    const esSupervisor = user.rol_id === 2;
+    return esAdmin || esSupervisor;
   };
 
   if (loading) {
@@ -404,9 +441,17 @@ const Productos: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleVerDetalle(producto.id_producto)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 hover:text-blue-900 mr-2"
+                      title="Ver detalles"
                     >
                       Detalle
+                    </button>
+                    <button
+                      onClick={() => navigate(`/productos/${producto.id_producto}`)}
+                      className="text-purple-600 hover:text-purple-900 text-xs"
+                      title="Ver página completa"
+                    >
+                      Ver más
                     </button>
                     {puedeGestionarProductos() && (
                       <>
@@ -449,8 +494,8 @@ const Productos: React.FC = () => {
 
       {/* Modal para crear producto */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Nuevo Producto
@@ -608,8 +653,8 @@ const Productos: React.FC = () => {
 
       {/* Modal para editar producto */}
       {showEditModal && editingProducto && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Editar Producto: {editingProducto.nombre}
@@ -764,6 +809,114 @@ const Productos: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de detalles flotante */}
+      {showDetailModal && selectedProducto && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Detalles del Producto: {selectedProducto.nombre}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedProducto(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">ID:</label>
+                    <p className="text-sm text-gray-900">#{selectedProducto.id_producto}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Estado:</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(selectedProducto.estado.codigo)}`}>
+                      {selectedProducto.estado.nombre}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Descripción:</label>
+                    <p className="text-sm text-gray-900">{selectedProducto.descripcion || 'Sin descripción'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Código de Barra:</label>
+                    <p className="text-sm text-gray-900">{selectedProducto.codigo_barra || 'Sin código'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Lote:</label>
+                    <p className="text-sm text-gray-900">{selectedProducto.lote}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Unidad de Medida:</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedProducto.unidadMedida?.nombre || selectedProducto.unidad_medida || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Stock Mínimo:</label>
+                    <p className="text-sm text-gray-900">{selectedProducto.stock_minimo}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Precio:</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedProducto.precio ? `$${Number(selectedProducto.precio).toFixed(2)}` : 'Sin precio'}
+                    </p>
+                  </div>
+                  {selectedProducto.fecha_caducidad && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Fecha de Caducidad:</label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(selectedProducto.fecha_caducidad).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedProducto(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                  >
+                    Cerrar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      openEditModal(selectedProducto);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedProducto(null);
+                      navigate(`/productos/${selectedProducto.id_producto}`);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    Ver Página Completa
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

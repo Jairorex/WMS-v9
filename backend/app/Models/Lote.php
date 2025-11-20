@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class Lote extends Model
 {
@@ -138,7 +139,7 @@ class Lote extends Model
             'cantidad_anterior' => $cantidadAnterior,
             'cantidad_nueva' => $cantidadNueva,
             'motivo' => $motivo,
-            'usuario_id' => $usuarioId ?? auth()->id(),
+            'usuario_id' => $usuarioId ?? (Auth::check() ? Auth::user()->id_usuario : null),
         ]);
 
         return $this;

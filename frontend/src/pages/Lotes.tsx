@@ -107,24 +107,36 @@ const Lotes: React.FC = () => {
   const handleCrearLote = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
+        codigo_lote: formData.codigo_lote,
+        producto_id: parseInt(formData.producto_id),
         cantidad_inicial: parseFloat(formData.cantidad_inicial.toString()),
         cantidad_disponible: parseFloat(formData.cantidad_disponible.toString()),
-        producto_id: parseInt(formData.producto_id),
         fecha_fabricacion: formData.fecha_fabricacion || null,
         fecha_caducidad: formData.fecha_caducidad || null,
-        fecha_vencimiento: formData.fecha_vencimiento || null
+        fecha_vencimiento: formData.fecha_vencimiento || null,
+        proveedor: formData.proveedor || null,
+        numero_serie: formData.numero_serie || null,
+        estado: formData.estado,
+        observaciones: formData.observaciones || null
       };
       
-      await http.post('/api/lotes', dataToSend);
-      setShowModal(false);
-      resetForm();
-      fetchLotes();
+      const response = await http.post('/api/lotes', dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowModal(false);
+        resetForm();
+        fetchLotes();
+      } else {
+        setError(response.data.message || 'Error al crear lote');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al crear lote');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al crear lote';
+      setError(errorMessage);
+      console.error('Error al crear lote:', err);
     } finally {
       setSubmitting(false);
     }
@@ -135,25 +147,37 @@ const Lotes: React.FC = () => {
     if (!editingLote) return;
     
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
+        codigo_lote: formData.codigo_lote,
+        producto_id: parseInt(formData.producto_id),
         cantidad_inicial: parseFloat(formData.cantidad_inicial.toString()),
         cantidad_disponible: parseFloat(formData.cantidad_disponible.toString()),
-        producto_id: parseInt(formData.producto_id),
         fecha_fabricacion: formData.fecha_fabricacion || null,
         fecha_caducidad: formData.fecha_caducidad || null,
-        fecha_vencimiento: formData.fecha_vencimiento || null
+        fecha_vencimiento: formData.fecha_vencimiento || null,
+        proveedor: formData.proveedor || null,
+        numero_serie: formData.numero_serie || null,
+        estado: formData.estado,
+        observaciones: formData.observaciones || null
       };
       
-      await http.put(`/api/lotes/${editingLote.id}`, dataToSend);
-      setShowEditModal(false);
-      setEditingLote(null);
-      resetForm();
-      fetchLotes();
+      const response = await http.put(`/api/lotes/${editingLote.id}`, dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowEditModal(false);
+        setEditingLote(null);
+        resetForm();
+        fetchLotes();
+      } else {
+        setError(response.data.message || 'Error al actualizar lote');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar lote');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al actualizar lote';
+      setError(errorMessage);
+      console.error('Error al actualizar lote:', err);
     } finally {
       setSubmitting(false);
     }
@@ -249,7 +273,8 @@ const Lotes: React.FC = () => {
   const puedeGestionarLotes = () => {
     if (!user) return false;
     const esAdmin = user.rol_id === 1;
-    return esAdmin;
+    const esSupervisor = user.rol_id === 2;
+    return esAdmin || esSupervisor;
   };
 
   if (loading) {
@@ -545,7 +570,7 @@ const Lotes: React.FC = () => {
 
       {/* Modal para crear lote */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
           <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -729,7 +754,7 @@ const Lotes: React.FC = () => {
 
       {/* Modal para editar lote */}
       {showEditModal && editingLote && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
           <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">

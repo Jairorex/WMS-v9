@@ -61,6 +61,8 @@ const Ubicaciones: React.FC = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedUbicacion, setSelectedUbicacion] = useState<Ubicacion | null>(null);
   const [editingUbicacion, setEditingUbicacion] = useState<Ubicacion | null>(null);
   const [formData, setFormData] = useState({
     codigo: '',
@@ -145,11 +147,16 @@ const Ubicaciones: React.FC = () => {
   const handleCrearUbicacion = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
+        codigo: formData.codigo,
+        pasillo: formData.pasillo,
+        estanteria: formData.estanteria,
+        nivel: formData.nivel,
         capacidad: parseInt(formData.capacidad.toString()),
+        tipo: formData.tipo || 'Almacen',
         coordenada_x: formData.coordenada_x ? parseFloat(formData.coordenada_x) : null,
         coordenada_y: formData.coordenada_y ? parseFloat(formData.coordenada_y) : null,
         coordenada_z: formData.coordenada_z ? parseFloat(formData.coordenada_z) : null,
@@ -158,15 +165,23 @@ const Ubicaciones: React.FC = () => {
         humedad_min: formData.humedad_min ? parseFloat(formData.humedad_min) : null,
         humedad_max: formData.humedad_max ? parseFloat(formData.humedad_max) : null,
         tipo_ubicacion_id: formData.tipo_ubicacion_id ? parseInt(formData.tipo_ubicacion_id) : null,
-        zona_id: formData.zona_id ? parseInt(formData.zona_id) : null
+        zona_id: formData.zona_id ? parseInt(formData.zona_id) : null,
+        tipo_palet: formData.tipo_palet || null
       };
       
-      await http.post('/api/ubicaciones', dataToSend);
-      setShowModal(false);
-      resetForm();
-      fetchUbicaciones();
+      const response = await http.post('/api/ubicaciones', dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowModal(false);
+        resetForm();
+        fetchUbicaciones();
+      } else {
+        setError(response.data.message || 'Error al crear ubicación');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al crear ubicación');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al crear ubicación';
+      setError(errorMessage);
+      console.error('Error al crear ubicación:', err);
     } finally {
       setSubmitting(false);
     }
@@ -177,11 +192,16 @@ const Ubicaciones: React.FC = () => {
     if (!editingUbicacion) return;
     
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
+        codigo: formData.codigo,
+        pasillo: formData.pasillo,
+        estanteria: formData.estanteria,
+        nivel: formData.nivel,
         capacidad: parseInt(formData.capacidad.toString()),
+        tipo: formData.tipo || editingUbicacion.tipo,
         coordenada_x: formData.coordenada_x ? parseFloat(formData.coordenada_x) : null,
         coordenada_y: formData.coordenada_y ? parseFloat(formData.coordenada_y) : null,
         coordenada_z: formData.coordenada_z ? parseFloat(formData.coordenada_z) : null,
@@ -190,16 +210,24 @@ const Ubicaciones: React.FC = () => {
         humedad_min: formData.humedad_min ? parseFloat(formData.humedad_min) : null,
         humedad_max: formData.humedad_max ? parseFloat(formData.humedad_max) : null,
         tipo_ubicacion_id: formData.tipo_ubicacion_id ? parseInt(formData.tipo_ubicacion_id) : null,
-        zona_id: formData.zona_id ? parseInt(formData.zona_id) : null
+        zona_id: formData.zona_id ? parseInt(formData.zona_id) : null,
+        tipo_palet: formData.tipo_palet || null
       };
       
-      await http.put(`/api/ubicaciones/${editingUbicacion.id_ubicacion}`, dataToSend);
-      setShowEditModal(false);
-      setEditingUbicacion(null);
-      resetForm();
-      fetchUbicaciones();
+      const response = await http.put(`/api/ubicaciones/${editingUbicacion.id_ubicacion}`, dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowEditModal(false);
+        setEditingUbicacion(null);
+        resetForm();
+        fetchUbicaciones();
+      } else {
+        setError(response.data.message || 'Error al actualizar ubicación');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar ubicación');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al actualizar ubicación';
+      setError(errorMessage);
+      console.error('Error al actualizar ubicación:', err);
     } finally {
       setSubmitting(false);
     }
@@ -250,7 +278,13 @@ const Ubicaciones: React.FC = () => {
   };
 
   const handleVerDetalle = (id: number) => {
-    navigate(`/ubicaciones/${id}`);
+    const ubicacion = ubicaciones.find(u => u.id_ubicacion === id);
+    if (ubicacion) {
+      setSelectedUbicacion(ubicacion);
+      setShowDetailModal(true);
+    } else {
+      navigate(`/ubicaciones/${id}`);
+    }
   };
 
   const handleActivar = async (id: number) => {
@@ -280,7 +314,8 @@ const Ubicaciones: React.FC = () => {
   const puedeGestionarUbicaciones = () => {
     if (!user) return false;
     const esAdmin = user.rol_id === 1;
-    return esAdmin;
+    const esSupervisor = user.rol_id === 2;
+    return esAdmin || esSupervisor;
   };
 
   if (loading) {
@@ -508,9 +543,17 @@ const Ubicaciones: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => handleVerDetalle(ubicacion.id_ubicacion)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 mr-2"
+                        title="Ver detalles"
                       >
                         Detalle
+                      </button>
+                      <button
+                        onClick={() => navigate(`/ubicaciones/${ubicacion.id_ubicacion}`)}
+                        className="text-purple-600 hover:text-purple-900 text-xs"
+                        title="Ver página completa"
+                      >
+                        Ver más
                       </button>
                       {puedeGestionarUbicaciones() && (
                         <>
@@ -554,7 +597,7 @@ const Ubicaciones: React.FC = () => {
 
       {/* Modal para crear ubicación */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
           <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -802,7 +845,7 @@ const Ubicaciones: React.FC = () => {
 
       {/* Modal para editar ubicación */}
       {showEditModal && editingUbicacion && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
           <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -896,6 +939,119 @@ const Ubicaciones: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de detalles flotante */}
+      {showDetailModal && selectedUbicacion && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Detalles de Ubicación: {selectedUbicacion.codigo}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedUbicacion(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Código:</label>
+                    <p className="text-sm text-gray-900">{selectedUbicacion.codigo}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Ubicación:</label>
+                    <p className="text-sm text-gray-900">
+                      P{selectedUbicacion.pasillo}-E{selectedUbicacion.estanteria}-N{selectedUbicacion.nivel}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Tipo:</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedUbicacion.tipoUbicacion?.nombre || selectedUbicacion.tipo}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Zona:</label>
+                    <p className="text-sm text-gray-900">{selectedUbicacion.zona?.nombre || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Capacidad:</label>
+                    <p className="text-sm text-gray-900">{selectedUbicacion.capacidad}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Ocupación:</label>
+                    <p className="text-sm text-gray-900">
+                      {(() => {
+                        const { ocupacion, porcentaje } = calcularOcupacion(selectedUbicacion);
+                        return `${ocupacion}/${selectedUbicacion.capacidad} (${porcentaje}%)`;
+                      })()}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Estado:</label>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      selectedUbicacion.ocupada ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {selectedUbicacion.ocupada ? 'Ocupada' : 'Disponible'}
+                    </span>
+                  </div>
+                  {selectedUbicacion.coordenada_x && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Coordenadas:</label>
+                      <p className="text-sm text-gray-900">
+                        ({selectedUbicacion.coordenada_x}, {selectedUbicacion.coordenada_y}, {selectedUbicacion.coordenada_z})
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedUbicacion(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                  >
+                    Cerrar
+                  </button>
+                  {puedeGestionarUbicaciones() && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        openEditModal(selectedUbicacion);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                    >
+                      Editar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedUbicacion(null);
+                      navigate(`/ubicaciones/${selectedUbicacion.id_ubicacion}`);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    Ver Página Completa
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

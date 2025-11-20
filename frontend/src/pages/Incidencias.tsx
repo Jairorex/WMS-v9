@@ -95,27 +95,36 @@ const Incidencias: React.FC = () => {
   const handleCrearIncidencia = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(''); // Limpiar errores anteriores
     
     try {
       const dataToSend = {
-        ...formData,
         id_tarea: formData.id_tarea ? parseInt(formData.id_tarea) : null,
         id_operario: parseInt(formData.id_operario),
-        id_producto: parseInt(formData.id_producto)
+        id_producto: parseInt(formData.id_producto),
+        descripcion: formData.descripcion,
+        estado: formData.estado
       };
       
-      await http.post('/api/incidencias', dataToSend);
-      setShowModal(false);
-      setFormData({
-        id_tarea: '',
-        id_operario: '',
-        id_producto: '',
-        descripcion: '',
-        estado: 'Pendiente'
-      });
-      fetchIncidencias();
+      const response = await http.post('/api/incidencias', dataToSend);
+      
+      if (response.data.success !== false) {
+        setShowModal(false);
+        setFormData({
+          id_tarea: '',
+          id_operario: '',
+          id_producto: '',
+          descripcion: '',
+          estado: 'Pendiente'
+        });
+        fetchIncidencias();
+      } else {
+        setError(response.data.message || 'Error al crear incidencia');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al crear incidencia');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Error al crear incidencia';
+      setError(errorMessage);
+      console.error('Error al crear incidencia:', err);
     } finally {
       setSubmitting(false);
     }
@@ -402,8 +411,8 @@ const Incidencias: React.FC = () => {
 
       {/* Modal para crear incidencia */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style={{ zIndex: 9999 }}>
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Reportar Incidencia
